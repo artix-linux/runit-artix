@@ -1,6 +1,6 @@
-## Runit init scripts for Cromnix GNU/Linux
+## Runit init scripts for Artix Linux
 
-This repository contains the runit init scripts for the Cromnix GNU/Linux
+This repository contains the runit init scripts for the Artix Linux
 distribution.
 
 This work is based on Void Linux's
