@@ -1,6 +1,6 @@
-## Runit init scripts for Cromnix
+## Runit init scripts for Cromnix GNU/Linux
 
-This repository contains the runit init scripts for the Cromnix Linux
+This repository contains the runit init scripts for the Cromnix GNU/Linux
 distribution.
 
 This work is based on Void Linux's
