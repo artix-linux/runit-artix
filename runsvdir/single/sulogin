@@ -1,1 +1,1 @@
-/etc/sv/sulogin
+/etc/runit/sv/sulogin

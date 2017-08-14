@@ -26,7 +26,7 @@ To see available runlevels (default and single, which just runs sulogin):
 
 To enable and start a service into the "current" runlevel:
 
-    # ln -s /etc/sv/<service> /var/service
+    # ln -s /etc/runit/sv/<service> /var/service
 
 To disable and remove a service:
 
