@@ -13,8 +13,8 @@ fi
 
 echo
 msg "Waiting for services to stop..."
-sv force-stop /var/service/*
-sv exit /var/service/*
+sv force-stop /run/runit/service/*
+sv exit /run/runit/service/*
 
 [ -x /etc/runit/rc.shutdown ] && /etc/runit/rc.shutdown
 
