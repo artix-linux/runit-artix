@@ -23,7 +23,7 @@ install:
 	install -m644 modules-load.8 ${DESTDIR}${PREFIX}/share/man/man8
 	ln -sf halt-runit.8 ${DESTDIR}${PREFIX}/share/man/man8/poweroff-runit.8
 	ln -sf halt-runit.8 ${DESTDIR}${PREFIX}/share/man/man8/reboot-runit.8
-	install -d ${DESTDIR}/etc/sv
+	install -d ${DESTDIR}/etc/runit/sv
 	install -d ${DESTDIR}/etc/runit/runsvdir
 	install -d ${DESTDIR}/etc/runit/core-services
 	install -m644 core-services/*.sh ${DESTDIR}/etc/runit/core-services
@@ -36,7 +36,7 @@ install:
 	ln -sf /run/runit/reboot ${DESTDIR}/etc/runit/
 	ln -sf /run/runit/stopit ${DESTDIR}/etc/runit/
 	cp -aP runsvdir/* ${DESTDIR}/etc/runit/runsvdir/
-	cp -aP services/* ${DESTDIR}/etc/sv/
+	cp -aP services/* ${DESTDIR}/etc/runit/sv/
 
 clean:
 	-rm -f halt pause
