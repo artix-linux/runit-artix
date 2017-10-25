@@ -35,8 +35,8 @@ install:
 	install -m755 rc.shutdown ${DESTDIR}/etc/runit
 	ln -sf /run/runit/reboot ${DESTDIR}/etc/runit/
 	ln -sf /run/runit/stopit ${DESTDIR}/etc/runit/
-	cp -aP runsvdir/* ${DESTDIR}/etc/runit/runsvdir/
-	cp -aP services/* ${DESTDIR}/etc/runit/sv/
+	cp -R --no-dereference --preserve=mode,links -v runsvdir/* ${DESTDIR}/etc/runit/runsvdir/
+	cp -R --no-dereference --preserve=mode,links -v services/* ${DESTDIR}/etc/runit/sv/
 
 clean:
 	-rm -f halt pause
