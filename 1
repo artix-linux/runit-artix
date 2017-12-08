@@ -5,15 +5,26 @@ PATH=/usr/bin:/usr/sbin
 
 . /etc/runit/functions
 
-msg "Welcome to Artix Linux!"
+if [ -x /usr/bin/openrc ]; then
+  msg "Welcome to Artix Linux!"
 
-[ -r /etc/runit/rc.conf ] && . /etc/runit/rc.conf
+  # Start core services: we'll use OpenRC for this.
+  msg "Initializing services with OpenRC..."
+  
+  for runlevel in sysinit boot default; do
+       openrc $runlevel || msg_error "Failed to start $runlevel runlevel"
+  done
+else
+  msg "Welcome to Artix Linux!"
 
-# Start core services: one-time system tasks.
-detect_virt
-for f in /etc/runit/core-services/*.sh; do
-    [ -r $f ] && . $f
-done
+  [ -r /etc/runit/rc.conf ] && . /etc/runit/rc.conf
+
+  # Start core services: one-time system tasks.
+  detect_virt
+  for f in /etc/runit/core-services/*.sh; do
+      [ -r $f ] && . $f
+  done
+fi
 
 dmesg >/var/log/dmesg.log
 if [ $(sysctl -n kernel.dmesg_restrict 2>/dev/null) -eq 1 ]; then
