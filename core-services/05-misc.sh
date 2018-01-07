@@ -19,3 +19,6 @@ if [ -n "$TIMEZONE" ]; then
     msg "Setting up timezone to '${TIMEZONE}'..."
     ln -sf "/usr/share/zoneinfo/$TIMEZONE" /etc/localtime
 fi
+
+msg "Setting up sysusers.d entries..."
+sysusers
