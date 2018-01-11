@@ -9,6 +9,7 @@ Linux's repo will also be applied here.
 
 ## Dependencies
 
+- GNU coreutils
 - A POSIX shell
 - A POSIX awk
 - procps-ng (needs pkill -s0,1)
