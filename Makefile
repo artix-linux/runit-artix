@@ -26,7 +26,9 @@ install:
 	install -d ${DESTDIR}/etc/runit/sv
 	install -d ${DESTDIR}/etc/runit/runsvdir
 	install -d ${DESTDIR}/etc/runit/core-services
+	install -d ${DESTDIR}/etc/runit/shutdown-services
 	install -m644 core-services/*.sh ${DESTDIR}/etc/runit/core-services
+	install -m644 shutdown-services/*.sh ${DESTDIR}/etc/runit/shutdown-services
 	install -m755 ${SCRIPTS} ${DESTDIR}/etc/runit
 	install -m644 functions $(DESTDIR)/etc/runit
 	install -m644 crypt.awk  ${DESTDIR}/etc/runit
