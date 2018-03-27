@@ -5,3 +5,4 @@ if [ -z "$VIRTUALIZATION" ]; then
     msg "Remounting rootfs read-only..."
     mount -o remount,ro /
 fi
+sync
