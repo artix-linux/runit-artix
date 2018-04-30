@@ -19,13 +19,3 @@ if [ -n "$TIMEZONE" ]; then
     msg "Setting up timezone to '${TIMEZONE}'..."
     ln -sf "/usr/share/zoneinfo/$TIMEZONE" /etc/localtime
 fi
-
-msg "Setting up sysusers.d entries..."
-if [ -x /usr/bin/sysusers ]; then
-    sysusers
-fi
-
-msg "Setting up tmpfiles.d entries..."
-if [ -x /usr/bin/tmpfiles ]; then
-    tmpfiles --exclude-prefix=/dev --create --remove --boot
-fi
