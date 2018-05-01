@@ -60,7 +60,7 @@ install:
 	install -d $(DESTDIR)$(RUNSVDIR)
 	$(CP) runsvdir/* $(DESTDIR)$(RUNSVDIR)/
 
-	$(LN) $(RUNSVDIR)/default $(DESTDIR)$(SERVICEDIR)
+	$(LN) runit/runsvdir/default $(DESTDIR)$(SERVICEDIR)
 
 	install -d $(DESTDIR)$(BINDIR)
 	install -m755 $(BIN) $(DESTDIR)$(BINDIR)
