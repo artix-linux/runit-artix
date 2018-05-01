@@ -69,11 +69,6 @@ load_conf(){
     [[ -z ${FONT_MAP} ]] && FONT_MAP=
     [[ -z ${FONT_UNIMAP} ]] && FONT_UNIMAP=
     [[ -z ${TTYS} ]] && TTYS=6
-    [[ -z ${USE_LVM} ]] && USE_LVM=false
-    [[ -z ${USE_DMRAID} ]] && USE_DMRAID=false
-    [[ -z ${USE_BTRFS} ]] && USE_BTRFS=false
-    [[ -z ${USE_CRYPT} ]] && USE_CRYPT=false
     [[ -z ${USE_SWAP} ]] && USE_SWAP=true
-    [[ -z ${USE_ZFS} ]] && USE_ZFS=false
     return 0
 }

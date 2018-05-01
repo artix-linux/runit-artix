@@ -17,29 +17,7 @@ else
     # Start sysinit services: one-time system tasks.
     detect_virt
     for f in /etc/runit/sysinit-services/*.sh; do
-        case $f in
-            *lvm.sh|*dmraid.sh|*btrfs.sh|*cryptsetup.sh)
-                if ${USE_LVM}; then
-                    [ -r $f ] && . $f
-                fi
-                if ${USE_DMRAID}; then
-                    [ -r $f ] && . $f
-                fi
-                if ${USE_BTRFS}; then
-                    [ -r $f ] && . $f
-                fi
-                if ${USE_CRYPT}; then
-                    [ -r $f ] && . $f
-                fi
-                if ${USE_SWAP}; then
-                    [ -r $f ] && . $f
-                fi
-                if ${USE_ZFS}; then
-                    [ -r $f ] && . $f
-                fi
-            ;;
-            *) [ -r $f ] && . $f ;;
-        esac
+        [ -r $f ] && . $f ;;
     done
 fi
 
