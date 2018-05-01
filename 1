@@ -10,13 +10,13 @@ PATH=/usr/bin:/usr/sbin
 msg "Welcome to Artix Linux!"
 
 if [ -x /usr/bin/openrc ] && [ "$SVMANAGER" = "openrc" ]; then
-  # Start core services: we'll use OpenRC for this.
+  # Start sysinit services: we'll use OpenRC for this.
   msg "Initializing runlevel sysinit with OpenRC..."
   openrc sysinit || msg_error "Failed to start sysinit runlevel"
 else
-  # Start core services: one-time system tasks.
+  # Start sysinit services: one-time system tasks.
   detect_virt
-  for f in /etc/runit/core-services/*.sh; do
+  for f in /etc/runit/sysinit-services/*.sh; do
       [ -r $f ] && . $f
   done
 fi
