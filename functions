@@ -55,3 +55,25 @@ deactivate_crypt() {
        deactivate_vgs "Crypt"
    fi
 }
+
+load_conf(){
+    local conf="$1"
+    [[ -f ${conf} ]] || return 1
+    [[ -r ${conf} ]] && source ${conf}
+    [[ -z ${SVMANAGER} ]] && SVMANAGER="runit"
+    [[ -z ${HOSTNAME} ]] && HOSTNAME="artix"
+    [[ -z ${HARDWARECLOCK} ]] && HARDWARECLOCK="UTC"
+    [[ -z ${TIMEZONE} ]] && TIMEZONE="Europe/Madrid"
+    [[ -z ${KEYMAP} ]] && KEYMAP="us"
+    [[ -z ${FONT} ]] && FONT="lat9w-16"
+    [[ -z ${FONT_MAP} ]] && FONT_MAP=
+    [[ -z ${FONT_UNIMAP} ]] && FONT_UNIMAP=
+    [[ -z ${TTYS} ]] && TTYS=6
+    [[ -z ${USE_LVM} ]] && USE_LVM=false
+    [[ -z ${USE_DMRAID} ]] && USE_DMRAID=false
+    [[ -z ${USE_BTRFS} ]] && USE_BTRFS=false
+    [[ -z ${USE_CRYPT} ]] && USE_CRYPT=false
+    [[ -z ${USE_SWAP} ]] && USE_SWAP=true
+    [[ -z ${USE_ZFS} ]] && USE_ZFS=false
+    return 0
+}
