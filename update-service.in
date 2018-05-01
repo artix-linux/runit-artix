@@ -1,0 +1,88 @@
+#!/bin/sh
+set -e
+
+servicedir=$SVDIR
+test -n "$servicedir" || servicedir=/etc/service
+
+err() { >&2 printf '%s\n\n' "$*"; exit 1; }
+fatal() { err "${0##*/}: fatal: $*"; }
+warn() { err "${0##*/}: warning: $*"; }
+usage() {
+  err "Usage: ${0##*/} --add|--remove <service-directory> [<service-name>]
+       ${0##*/} --list|--check [<service-name>]"
+}
+
+opt=$1
+svdir=${2%/}
+sv=$3
+test -z "${opt##-*}" || usage
+
+case "$opt" in
+  -c|--check) exec >/dev/null; exec 2>/dev/null; opt=-l;;
+esac
+case "$opt" in
+  -l|--list)
+    test -n "$svdir" || exec ls -1 "$servicedir"
+    test -h "$servicedir"/"$svdir" || err "Service $svdir not registered."
+    printf '%s -> %s\n' "$svdir" "$(readlink "$servicedir"/"$svdir")"
+    exit 0
+  ;;
+esac
+
+test -n "$svdir" || usage
+test -d "$svdir" ||
+  fatal "$svdir does not exist, or is not a directory."
+test -z "${svdir%%/*}" ||
+  fatal "The <service-directory> must start with a slash."
+test -n "$sv" || sv=${svdir##*/}
+test -n "${sv##.*}" ||
+  fatal "The <service-name> must not start with a dot."
+test "$sv" = "${sv#*/}" ||
+  fatal "The <service-name> must not contain a slash."
+
+case "$opt" in
+  -a|--add)
+    test "$(id -u)" = 0 || fatal "${0##*/} -a must be run by root."
+    if test -e "$servicedir"/"$sv"; then
+      test -h "$servicedir"/"$sv" ||
+        fatal "$servicedir/$sv exists, but is not a symbolic link."
+      test "$(readlink "$servicedir"/"$sv")" = "$svdir" ||
+        test "$(readlink "$servicedir"/"$sv")" = "$svdir"/ ||
+          fatal "$servicedir/$sv exists, but doesn't point to $svdir."
+      printf '%s\n' "Service $sv already added."
+      exit 0
+    fi
+    ! sv stat "$svdir" >/dev/null 2>&1 ||
+      fatal "$svdir is currently controlled by a runsv(8) process."
+    if test "${svdir#/etc/}" != "$svdir"; then
+      if test ! -h "$svdir"/supervise; then
+        rm -rf "$svdir"/supervise
+        ln -s /var/lib/supervise/"$sv" "$svdir"/supervise
+      fi
+      if test -d "$svdir"/log && test ! -h "$svdir"/log/supervise; then
+        rm -rf "$svdir"/log/supervise
+        ln -s /var/lib/supervise/"$sv".log "$svdir"/log/supervise
+      fi
+    fi
+    ln -s "$svdir" "$servicedir"/"$sv"
+    printf '%s\n' "Service $sv added."
+    exit 0
+  ;;
+  -r|--remove)
+    test "$(id -u)" = 0 || fatal "${0##*/} -r must be run by root."
+    test -e "$servicedir"/"$sv" ||
+      warn "$servicedir/$sv does not exist."
+    test -h "$servicedir"/"$sv" ||
+      fatal "$servicedir/$sv is not a symbolic link."
+    test "$svdir" = "$(readlink "$servicedir"/"$sv")" ||
+      test "$svdir"/ = "$(readlink "$servicedir"/"$sv")" ||
+        fatal "$servicedir/$sv does not point to $svdir."
+    rm -f "$servicedir"/"$sv"
+    printf '%s %s\n' \
+      "Service $sv removed," \
+      "the service daemon received the TERM and CONT signals."
+    exit 0
+  ;;
+  *) usage
+  ;;
+esac

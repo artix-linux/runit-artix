@@ -3,17 +3,17 @@
 
 PATH=/usr/bin:/usr/sbin
 
-. /etc/runit/functions
+. @RCDIR@/functions
 detect_virt
-load_conf '/etc/runit/rc.conf'
+load_conf '@RCDIR@/rc.conf'
 
 if [ -e /run/runit/reboot ]; then
     chmod 100 /run/runit/reboot
 fi
 
-[ -x /etc/runit/rc.shutdown ] && /etc/runit/rc.shutdown
+[ -x @RCDIR@/rc.shutdown ] && @RCDIR@/rc.shutdown
 
-for f in /etc/runit/shutdown-services/*.sh; do
+for f in @RCDIR@/shutdown.d/*.sh; do
     [ -r $f ] && . $f
 done
 

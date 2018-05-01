@@ -1,50 +1,48 @@
 SYSCONFDIR = /etc
-PREFIX ?=	/usr
-SCRIPTS=	1 2 3 ctrlaltdel rc.local rc.shutdown
-BIN_LIBDIR = ${PREFIX}/lib/runit-artix/bin
+PREFIX ?= /usr
 BINDIR = ${PREFIX}/bin
+RCBINDIR = ${PREFIX}/lib/rc/bin
 MANDIR = ${PREFIX}/share/man
 
-BIN = zzz pause modules-load
+RCDIR = $(SYSCONFDIR)/rc
+SYSINITDIR = $(RCDIR)/sysinit.d
+SHUTDOWNDIR = $(RCDIR)/shutdown.d
 
-CTTL_BIN = halt shutdown
+SYSINIT = $(wildcard rc-sysinit/*.sh)
+SHUTDOWN = $(wildcard rc-shutdown/*.sh)
 
 RUNITDIR = $(SYSCONFDIR)/runit
-
-SYSINITDIR = $(RUNITDIR)/sysinit-services
-
 SVDIR = $(RUNITDIR)/sv
-
 RUNSVDIR = $(RUNITDIR)/runsvdir
 
-SHUTDOWNDIR = $(RUNITDIR)/shutdown-services
-
-SYSINIT = $(wildcard sysinit-services/*.sh)
-
-SHUTDOWN = $(wildcard shutdown-services/*.sh)
-
-MISC = functions crypt.awk rc.conf
-
+BIN = zzz pause modules-load
+RC_BIN = halt shutdown
+RC_SCRIPTS =  functions crypt.awk rc.conf rc.local rc.shutdown
+STAGES = 1 2 3 ctrlaltdel
 
 LN = ln -sf
 CP = cp -R --no-dereference --preserve=mode,links -v
+RM = rm -f
+RMD = rm -fr --one-file-system
+M4 = m4 -P
+CHMODAW = chmod a-w
+CHMODX = chmod +x
 
-all:
+EDIT = sed -e "s|@RCDIR[@]|$(RCDIR)|g"
+
+%: %.in Makefile
+	@echo "GEN $@"
+	@$(RM) "$@"
+	@$(M4) $@.in | $(EDIT) >$@
+	@$(CHMODAW) "$@"
+	@$(CHMODX) "$@"
+
+all:	$(STAGES)
 	$(CC) $(CFLAGS) halt.c -o halt $(LDFLAGS)
 	$(CC) $(CFLAGS) pause.c -o pause $(LDFLAGS)
 
+
 install:
-	install -d ${DESTDIR}${BINDIR}
-	install -m755 $(BIN) ${DESTDIR}${BINDIR}
-
-	install -d ${DESTDIR}${BIN_LIBDIR}
-	install -m755 $(CTTL_BIN) ${DESTDIR}${BIN_LIBDIR}
-
-	$(LN) halt ${DESTDIR}${BIN_LIBDIR}/poweroff
-	$(LN) halt ${DESTDIR}${BIN_LIBDIR}/reboot
-
-	install -d ${DESTDIR}$(SVDIR)
-	install -d ${DESTDIR}$(RUNSVDIR)
 
 	install -d ${DESTDIR}$(SYSINITDIR)
 	install -m644 $(SYSINIT) ${DESTDIR}$(SYSINITDIR)
@@ -52,13 +50,30 @@ install:
 	install -d ${DESTDIR}$(SHUTDOWNDIR)
 	install -m644 $(SHUTDOWN) ${DESTDIR}$(SHUTDOWNDIR)
 
-	install -m755 ${SCRIPTS} ${DESTDIR}$(RUNITDIR)
-	install -m644 $(MISC) $(DESTDIR)$(RUNITDIR)
+	install -m755 ${RC_SCRIPTS} ${DESTDIR}$(RCDIR)
+
+	install -d ${DESTDIR}$(SVDIR)
+	$(CP) services/* ${DESTDIR}$(SVDIR)/
+
+	install -d ${DESTDIR}$(RUNSVDIR)
+	$(CP) runsvdir/* ${DESTDIR}$(RUNSVDIR)/
+
+# 	install -d ${DESTDIR}$(RUNITDIR)/service
+# 	$(LN) $(RUNITDIR)/service ${DESTDIR}$(RUNSVDIR)/default
+
+	install -d ${DESTDIR}${BINDIR}
+	install -m755 $(BIN) ${DESTDIR}${BINDIR}
+
+	install -d ${DESTDIR}${RCBINDIR}
+	install -m755 $(RC_BIN) ${DESTDIR}${RCBINDIR}
+
+	install -m755 ${STAGES} ${DESTDIR}$(RUNITDIR)
+
+	$(LN) halt ${DESTDIR}${RCBINDIR}/poweroff
+	$(LN) halt ${DESTDIR}${RCBINDIR}/reboot
 
 	$(LN) /run/runit/reboot ${DESTDIR}$(RUNITDIR)/
 	$(LN) /run/runit/stopit ${DESTDIR}$(RUNITDIR)/
-	$(CP) runsvdir/* ${DESTDIR}$(RUNSVDIR)/
-	$(CP) services/* ${DESTDIR}$(SVDIR)/
 
 	install -d ${DESTDIR}${MANDIR}/man1
 	install -m644 pause.1 ${DESTDIR}${MANDIR}/man1
@@ -69,8 +84,8 @@ install:
 install_sysv:
 	install -d ${DESTDIR}${PREFIX}/bin
 	$(LN) runit-init ${DESTDIR}${BINDIR}/init
-	$(LN) ${BIN_LIBDIR}/halt ${DESTDIR}${BINDIR}/halt
-	$(LN) ${BIN_LIBDIR}/shutdown ${DESTDIR}${BINDIR}/shutdown
+	$(LN) ${RCBINDIR}/halt ${DESTDIR}${BINDIR}/halt
+	$(LN) ${RCBINDIR}/shutdown ${DESTDIR}${BINDIR}/shutdown
 	$(LN) halt ${DESTDIR}${BINDIR}/poweroff
 	$(LN) halt ${DESTDIR}${BINDIR}/reboot
 	install -m644 shutdown.8 ${DESTDIR}${MANDIR}/man8/shutdown.8
@@ -80,5 +95,6 @@ install_sysv:
 
 clean:
 	-rm -f halt pause
+	-rm -f $(STAGES)
 
 .PHONY: all install install_sysv clean

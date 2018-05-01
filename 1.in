@@ -3,9 +3,9 @@
 
 PATH=/usr/bin:/usr/sbin
 
-. /etc/runit/functions
+. @RCDIR@/functions
 
-load_conf '/etc/runit/rc.conf'
+load_conf '@RCDIR@/rc.conf'
 
 msg "Welcome to Artix Linux!"
 
@@ -16,7 +16,7 @@ if [ -x /usr/bin/openrc ] && [ "$SVMANAGER" = "openrc" ]; then
 else
     # Start sysinit services: one-time system tasks.
     detect_virt
-    for f in /etc/runit/sysinit-services/*.sh; do
+    for f in @RCDIR@/sysinit.d/*.sh; do
         [ -r $f ] && . $f ;;
     done
 fi
