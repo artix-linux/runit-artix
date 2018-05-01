@@ -2,7 +2,7 @@
 set -e
 
 servicedir=$SVDIR
-test -n "$servicedir" || servicedir=/etc/service
+test -n "$servicedir" || servicedir=@SERVICEDIR@
 
 err() { >&2 printf '%s\n\n' "$*"; exit 1; }
 fatal() { err "${0##*/}: fatal: $*"; }
