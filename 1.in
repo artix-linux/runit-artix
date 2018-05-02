@@ -17,7 +17,7 @@ else
     # Start sysinit services: one-time system tasks.
     detect_virt
     for f in @RCDIR@/sysinit.d/*.sh; do
-        [ -r $f ] && . $f ;;
+        [ -r $f ] && . $f
     done
 fi
 
