@@ -1,0 +1,72 @@
+#!/bin/bash
+#
+# @RCDIR@/rc.shutdown
+#
+
+. @RCDIR@/rc.conf
+. @RCDIR@/functions
+
+# don't let all the systemd tools be too verbose
+export SYSTEMD_LOG_LEVEL="notice"
+
+# avoid staircase effect
+stty onlcr
+
+echo " "
+printhl "Initiating shutdown..."
+echo " "
+
+run_hook shutdown_start
+
+[[ -x @RCDIR@/rc.local.shutdown ]] && @RCDIR@/rc.local.shutdown
+
+status 'Saving random seed' save_random_seed
+
+[[ $TIMEZONE ]] && status "Configuring time zone" set_timezone "$TIMEZONE"
+
+# Write to wtmp file before unmounting
+halt -w
+
+# stop monitoring of LVM2 groups before unmounting filesystems
+[[ $USELVM = [Yy][Ee][Ss] && -x $(type -P lvm) ]] &&
+	status "Deactivating monitoring of LVM2 groups" vgchange --monitor n
+
+# any future uevents can and should be ignored
+status "Shutting down udev" udevadm control --exit
+
+run_hook shutdown_prekillall
+
+kill_all
+
+run_hook shutdown_postkillall
+
+run_hook shutdown_preumount
+
+# unmount any non-API partitions that are backed by swap; we don't want to
+# move their contents into memory (waste of time and might caues OOM).
+status "Unmounting swap-backed filesystems" umount_all "tmpfs"
+
+# almost everything is dead now, so the swap should hopefully be relatively
+# empty, and quick to switch off
+status "Deactivating swap" swapoff -a
+
+status "Unmounting non-API filesystems" umount_all
+
+run_hook shutdown_postumount
+
+# Kill non-root encrypted partition mappings
+if [[ -f /etc/crypttab ]] && type -p cryptsetup >/dev/null; then
+	# Maybe someone has LVM on an encrypted block device
+	# executing an extra vgchange is errorless
+	[[ $USELVM = [Yy][Ee][Ss] ]] && vgchange --sysinit -a n &>/dev/null
+	read_crypttab do_lock
+fi
+
+[[ $USELVM = [Yy][Ee][Ss] && -x $(type -P lvm) ]] &&
+	status "Deactivating LVM2 groups" vgchange --sysinit -a n &>/dev/null
+
+status "Remounting root filesystem read-only" \
+    mount -o remount,ro /
+
+# run_hook shutdown_poweroff
+

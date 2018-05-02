@@ -5,18 +5,17 @@ PATH=/usr/bin:/usr/sbin
 
 . @RCDIR@/functions
 
-load_conf '@RCDIR@/rc.conf'
-
-detect_virt
+status "Stop services ..." sv force-stop @RUNDIR@/service/*
+status "Exit services ..." sv exit @RUNDIR@/service/*
 
 if [ -e @RUNDIR@/reboot ]; then
     chmod 100 @RUNDIR@/reboot
 fi
 
-[ -x @RCDIR@/rc.shutdown ] && @RCDIR@/rc.shutdown
+[ -r @RCDIR@/rc.shutdown ] && . @RCDIR@/rc.shutdown
 
-for f in @RCDIR@/shutdown.d/*.sh; do
-    [ -r $f ] && . $f
-done
+if [ -e @RUNDIR@/reboot ]; then
+    [[ -x $(type -P kexec) ]] && kexec -e &>/dev/null
+fi
 
-msg "Stage 3 completed."
+status "Stage 3 completed."

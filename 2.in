@@ -3,22 +3,17 @@
 
 PATH=/usr/bin:/usr/sbin
 
+. @RCDIR@/functions
+
+status "Running stage 2"
+
 runlevel=default
 for arg in $(cat /proc/cmdline); do
     if [ -d @RUNITDIR@/runsvdir/"$arg" ]; then
-        echo "Runlevel detected: '$arg' (via kernel cmdline)"
+        status "Runlevel detected: '$arg' (via kernel cmdline)"
         runlevel="$arg"
     fi
 done
-
-[ -x @RCDIR@/rc.local ] && @RCDIR@/rc.local
-
-# The reason that boot is not in stage 1 is because if something hangs
-# we can still listen for signals, however stage 1 does NOT accept signals
-# if [ -x /usr/bin/openrc ] && [ "$SVMANAGER" = "openrc" ]; then
-#     openrc boot
-#     openrc default
-# fi
 
 runsvchdir "${runlevel}"
 # mkdir -p @RUNDIR@/runsvdir
