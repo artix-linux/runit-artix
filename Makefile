@@ -17,7 +17,8 @@ RUNSVDIR = $(RUNITDIR)/runsvdir
 SERVICEDIR = /etc/service
 RUNDIR = /run/runit
 
-BIN = zzz pause modules-load
+BIN = zzz pause modules-load bootlogd
+
 RCBIN = halt shutdown
 
 SHUTDOWN = shutdown
@@ -51,6 +52,7 @@ EDIT = sed \
 all:	$(STAGES) $(RCSCRIPTS) shutdown
 	$(CC) $(CFLAGS) halt.c -o halt $(LDFLAGS)
 	$(CC) $(CFLAGS) pause.c -o pause $(LDFLAGS)
+	$(CC) -ansi -O2 -fomit-frame-pointer -W -Wall -D_GNU_SOURCE bootlogd.c -o bootlogd $(LDFLAGS) -lutil
 
 install:
 	### rc
@@ -90,6 +92,7 @@ install:
 	install -d $(DESTDIR)$(MANDIR)/man8
 	install -m644 zzz.8 $(DESTDIR)$(MANDIR)/man8/zzz.8
 	install -m644 modules-load.8 $(DESTDIR)$(MANDIR)/man8
+	install -m644 bootlogd.8 $(DESTDIR)$(MANDIR)/man8/bootlogd.8
 
 install_sysv:
 	install -d $(DESTDIR)$(PREFIX)/bin
@@ -104,7 +107,7 @@ install_sysv:
 	$(LN) halt.8 $(DESTDIR)$(MANDIR)/man8/reboot.8
 
 clean:
-	-rm -f halt pause
+	-rm -f halt pause bootlogd
 	-rm -f $(STAGES) $(RCSCRIPTS) shutdown
 
 .PHONY: all install install_sysv clean
