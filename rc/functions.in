@@ -251,7 +251,7 @@ load_modules() {
 udevd_modprobe() {
 	# $1 = where we are being called from.
 	# This is used to determine which hooks to run.
-	status "Starting udev daemon" /usr/lib/udev/udevd --daemon
+	status "Starting udev daemon" udevd --daemon
 
 	run_hook "$1_udevlaunched"
 
