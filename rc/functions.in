@@ -200,14 +200,13 @@ kill_all_wait() {
 
 	local i
 
-	killall5 -${1} ${omit_pids[@]/#/-o } &>/dev/null
+	pkill --inverse -s0,1 -TERM
 
 	for (( i=0; i<${2}; i++ )); do
 
 		sleep .25 # 1/4 second
 
-		# sending SIGCONT to processes to check if they are there
-		killall5 -18 ${omit_pids[@]/#/-o } &>/dev/null
+		pkill --inverse -s0,1 -KILL
 
 		if (( $? == 2 )); then
 			return 0
