@@ -7,32 +7,22 @@ PATH=/usr/bin:/usr/sbin
 
 load_conf '@RCDIR@/rc.conf'
 
-# mkdir -p -m0755 /run/lvm /run/user /run/lock /run/log
-
-mkdir -p -m0755 @RUNDIR@
+mkdir -p -m0755 @RUNDIR@ /run/lvm /run/user /run/lock /run/log
 
 msg "Welcome to Artix Linux!"
 
-if [ -x /usr/bin/openrc ] && [ "$SVMANAGER" = "openrc" ]; then
-    # Start sysinit services: we'll use OpenRC for this.
-    msg "Initializing runlevel sysinit with OpenRC..."
-    openrc sysinit || msg_error "Failed to start sysinit runlevel"
-else
-    # Start sysinit services: one-time system tasks.
-    detect_virt
-    for f in @RCDIR@/sysinit.d/*.sh; do
-        [ -r $f ] && . $f
-    done
-fi
-
-# dmesg >/var/log/dmesg.log
-# if [ $(sysctl -n kernel.dmesg_restrict 2>/dev/null) -eq 1 ]; then
-#     chmod 0600 /var/log/dmesg.log
+# if [ -x /usr/bin/openrc ] && [ "$SVMANAGER" = "openrc" ]; then
+#     # Start sysinit services: we'll use OpenRC for this.
+#     msg "Initializing runlevel sysinit with OpenRC..."
+#     openrc sysinit || msg_error "Failed to start sysinit runlevel"
 # else
-#     chmod 0644 /var/log/dmesg.log
+    # Start sysinit services: one-time system tasks.
+detect_virt
+for f in @RCDIR@/sysinit.d/*.sh; do
+    [ -r $f ] && . $f
+done
 # fi
 
-mkdir -p @RUNDIR@
 install -m100 /dev/null @RUNDIR@/stopit
 
 msg "Initialization complete, running stage 2..."

@@ -4,8 +4,10 @@
 PATH=/usr/bin:/usr/sbin
 
 . @RCDIR@/functions
-detect_virt
+
 load_conf '@RCDIR@/rc.conf'
+
+detect_virt
 
 if [ -e @RUNDIR@/reboot ]; then
     chmod 100 @RUNDIR@/reboot

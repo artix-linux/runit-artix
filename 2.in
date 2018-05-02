@@ -15,10 +15,10 @@ done
 
 # The reason that boot is not in stage 1 is because if something hangs
 # we can still listen for signals, however stage 1 does NOT accept signals
-if [ -x /usr/bin/openrc ] && [ "$SVMANAGER" = "openrc" ]; then
-    openrc boot
-    openrc default
-fi
+# if [ -x /usr/bin/openrc ] && [ "$SVMANAGER" = "openrc" ]; then
+#     openrc boot
+#     openrc default
+# fi
 
 runsvchdir "${runlevel}"
 # mkdir -p @RUNDIR@/runsvdir
