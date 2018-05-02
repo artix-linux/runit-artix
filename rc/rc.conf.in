@@ -1,4 +1,4 @@
-# /etc/rc/rc.conf - system configuration
+# @RCDIR@/rc.conf - system configuration
 
 # Storage
 #

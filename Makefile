@@ -5,11 +5,6 @@ RCBINDIR = $(PREFIX)/lib/rc/bin
 MANDIR = $(PREFIX)/share/man
 
 RCDIR = $(SYSCONFDIR)/rc
-SYSINITDIR = $(RCDIR)/sysinit.d
-SHUTDOWNDIR = $(RCDIR)/shutdown.d
-
-SYSINIT = $(wildcard rc-sysinit/*.sh)
-SHUTDOWN = $(wildcard rc-shutdown/*.sh)
 
 RUNITDIR = $(SYSCONFDIR)/runit
 SVDIR = $(RUNITDIR)/sv
@@ -20,8 +15,11 @@ RUNDIR = /run/runit
 
 BIN = zzz pause modules-load
 RCBIN = halt shutdown
-SCRIPT = shutdown
-RCSCRIPTS =  functions crypt.awk rc.conf rc.local rc.shutdown
+
+COMPAT = shutdown
+
+RCSCRIPTS = functions rc.conf rc.local rc.shutdown rc.sysinit
+
 STAGES = 1 2 3 ctrlaltdel
 
 LN = ln -sf
@@ -32,7 +30,7 @@ M4 = m4 -P
 CHMODAW = chmod a-w
 CHMODX = chmod +x
 
-EDIT = sed \
+SED = sed \
 	-e "s|@RCDIR[@]|$(RCDIR)|g" \
 	-e "s|@RUNITDIR[@]|$(RUNITDIR)|g" \
 	-e "s|@SERVICEDIR[@]|$(SERVICEDIR)|g" \
@@ -42,22 +40,16 @@ EDIT = sed \
 %: %.in Makefile
 	@echo "GEN $@"
 	@$(RM) "$@"
-	@$(M4) $@.in | $(EDIT) >$@
+	@$(M4) $@.in | $(SED) >$@
 	@$(CHMODAW) "$@"
 	@$(CHMODX) "$@"
 
-all:	$(STAGES) $(SCRIPT)
+all:	$(STAGES) $(RCSCRIPTS) $(COMPAT)
 	$(CC) $(CFLAGS) halt.c -o halt $(LDFLAGS)
 	$(CC) $(CFLAGS) pause.c -o pause $(LDFLAGS)
 
 install:
-
-	install -d $(DESTDIR)$(SYSINITDIR)
-	install -m644 $(SYSINIT) $(DESTDIR)$(SYSINITDIR)
-
-	install -d $(DESTDIR)$(SHUTDOWNDIR)
-	install -m644 $(SHUTDOWN) $(DESTDIR)$(SHUTDOWNDIR)
-
+	install -d $(DESTDIR)$(RCDIR)/functions.d
 	install -m755 $(RCSCRIPTS) $(DESTDIR)$(RCDIR)
 
 	install -d $(DESTDIR)$(SVDIR)
@@ -102,6 +94,6 @@ install_sysv:
 
 clean:
 	-rm -f halt pause
-	-rm -f $(STAGES) $(SCRIPT)
+	-rm -f $(STAGES) $(RCSCRIPTS) $(COMPAT)
 
 .PHONY: all install install_sysv clean
