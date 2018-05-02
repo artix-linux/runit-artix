@@ -3,6 +3,10 @@ PREFIX ?= /usr
 BINDIR = $(PREFIX)/bin
 RCBINDIR = $(PREFIX)/lib/rc/bin
 MANDIR = $(PREFIX)/share/man
+LIBDIR = $(PREFIX)/lib
+
+TMPFILESDIR = $(LIBDIR)/tmpfiles.d
+TMPFILES = runit.conf
 
 RCDIR = $(SYSCONFDIR)/rc
 
@@ -64,7 +68,10 @@ install:
 	install -m755 $(BIN) $(DESTDIR)$(BINDIR)
 
 	install -d $(DESTDIR)$(RCBINDIR)
-	install -m755 $(RCBIN) $(DESTDIR)$(RCBINDIR)
+	install -m644 $(RCBIN) $(DESTDIR)$(RCBINDIR)
+
+	install -d $(DESTDIR)$(TMPFILESDIR)
+	install -m755 $(TMPFILES) $(DESTDIR)$(TMPFILESDIR)
 
 	install -m755 $(STAGES) $(DESTDIR)$(RUNITDIR)
 
