@@ -77,6 +77,10 @@ if [[ $HWCLOCK_PARAMS ]]; then
 	unset TZ
 fi
 
+status "Creating list of required static device nodes" mk_kmod_static_nodes
+
+status "Setting up tmpfiles.d entries for /dev" mk_tmpfiles_dev
+
 # Start/trigger udev, load MODULES, and settle udev
 udevd_modprobe sysinit
 
@@ -136,8 +140,12 @@ status "Activating swap" swapon -a
 
 status 'Initializing random seed' init_random_seed
 
+status "Setting up tmpfiles.d entries" mk_tmpfiles_setup
+
+msg "Setting up sysusers.d entries" mk_sysusers
+
 # Remove leftover files
-remove_leftover
+# remove_leftover
 
 stat_busy "Saving dmesg log"
 	if [[ -e /proc/sys/kernel/dmesg_restrict ]] &&

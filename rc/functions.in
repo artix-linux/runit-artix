@@ -500,9 +500,9 @@ umount_all() {
 
 }
 
-remove_leftover() {
-	status 'Removing leftover files' tmpfiles --create --remove --clean
-}
+# remove_leftover() {
+# 	status 'Removing leftover files' tmpfiles --create --remove --clean
+# }
 
 bootlogd_stop() {
 	[[ -f /run/bootlogd.pid ]] || return 0
@@ -533,6 +533,29 @@ init_random_seed(){
 
 save_random_seed(){
     ( umask 077; bytes=$(cat /proc/sys/kernel/random/poolsize) || bytes=512; dd if=/dev/urandom of=/var/lib/random-seed count=1 bs=$bytes >/dev/null 2>&1 )
+}
+
+mk_kmod_static_nodes(){
+    [[ -d /run/tmpfiles.d ]] || mkdir /run/tmpfiles.d
+    kmod static-nodes --format=tmpfiles --output=/run/tmpfiles.d/kmod.conf
+}
+
+mk_tmpfiles_dev(){
+    if [ -x /usr/bin/tmpfiles ]; then
+        tmpfiles --prefix=/dev --create --boot
+    fi
+}
+
+mk_tmpfiles_setup(){
+    if [ -x /usr/bin/tmpfiles ]; then
+        tmpfiles --exclude-prefix=/dev --create --remove --boot
+    fi
+}
+
+mk_sysusers(){
+    if [ -x /usr/bin/sysusers ]; then
+        sysusers
+    fi
 }
 
 ###############################
