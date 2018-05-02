@@ -22,7 +22,7 @@ RCBIN = halt shutdown
 
 SHUTDOWN = shutdown
 
-RCSCRIPTS = functions rc.conf rc.local rc.shutdown rc.sysinit
+RCSCRIPTS = rc/functions rc/rc.conf rc/rc.local rc/rc.shutdown rc/rc.sysinit
 
 STAGES = 1 2 3 ctrlaltdel
 
@@ -48,13 +48,23 @@ EDIT = sed \
 	@$(CHMODAW) "$@"
 	@$(CHMODX) "$@"
 
-all:	$(STAGES) $(RCSCRIPTS) $(SHUTDOWN)
+all:	$(STAGES) $(RCSCRIPTS) shutdown
 	$(CC) $(CFLAGS) halt.c -o halt $(LDFLAGS)
 	$(CC) $(CFLAGS) pause.c -o pause $(LDFLAGS)
 
 install:
+	### rc
+
 	install -d $(DESTDIR)$(RCDIR)/functions.d
 	install -m755 $(RCSCRIPTS) $(DESTDIR)$(RCDIR)
+
+	install -d $(DESTDIR)$(RCBINDIR)
+	install -m644 $(RCBIN) $(DESTDIR)$(RCBINDIR)
+
+	$(LN) halt $(DESTDIR)$(RCBINDIR)/poweroff
+	$(LN) halt $(DESTDIR)$(RCBINDIR)/reboot
+
+	### runit
 
 	install -d $(DESTDIR)$(SVDIR)
 	$(CP) sv/* $(DESTDIR)$(SVDIR)/
@@ -67,16 +77,10 @@ install:
 	install -d $(DESTDIR)$(BINDIR)
 	install -m755 $(BIN) $(DESTDIR)$(BINDIR)
 
-	install -d $(DESTDIR)$(RCBINDIR)
-	install -m644 $(RCBIN) $(DESTDIR)$(RCBINDIR)
-
 	install -d $(DESTDIR)$(TMPFILESDIR)
 	install -m755 $(TMPFILES) $(DESTDIR)$(TMPFILESDIR)
 
 	install -m755 $(STAGES) $(DESTDIR)$(RUNITDIR)
-
-	$(LN) halt $(DESTDIR)$(RCBINDIR)/poweroff
-	$(LN) halt $(DESTDIR)$(RCBINDIR)/reboot
 
 	$(LN) $(RUNDIR)/reboot $(DESTDIR)$(RUNITDIR)/
 	$(LN) $(RUNDIR)/stopit $(DESTDIR)$(RUNITDIR)/
@@ -101,6 +105,6 @@ install_sysv:
 
 clean:
 	-rm -f halt pause
-	-rm -f $(STAGES) $(RCSCRIPTS) $(SHUTDOWN)
+	-rm -f $(STAGES) $(RCSCRIPTS) shutdown
 
 .PHONY: all install install_sysv clean
