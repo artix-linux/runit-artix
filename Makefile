@@ -16,7 +16,7 @@ RUNDIR = /run/runit
 BIN = zzz pause modules-load
 RCBIN = halt shutdown
 
-COMPAT = shutdown
+SHUTDOWN = shutdown
 
 RCSCRIPTS = functions rc.conf rc.local rc.shutdown rc.sysinit
 
@@ -30,7 +30,7 @@ M4 = m4 -P
 CHMODAW = chmod a-w
 CHMODX = chmod +x
 
-SED = sed \
+EDIT = sed \
 	-e "s|@RCDIR[@]|$(RCDIR)|g" \
 	-e "s|@RUNITDIR[@]|$(RUNITDIR)|g" \
 	-e "s|@SERVICEDIR[@]|$(SERVICEDIR)|g" \
@@ -40,11 +40,11 @@ SED = sed \
 %: %.in Makefile
 	@echo "GEN $@"
 	@$(RM) "$@"
-	@$(M4) $@.in | $(SED) >$@
+	@$(M4) $@.in | $(EDIT) >$@
 	@$(CHMODAW) "$@"
 	@$(CHMODX) "$@"
 
-all:	$(STAGES) $(RCSCRIPTS) $(COMPAT)
+all:	$(STAGES) $(RCSCRIPTS) $(SHUTDOWN)
 	$(CC) $(CFLAGS) halt.c -o halt $(LDFLAGS)
 	$(CC) $(CFLAGS) pause.c -o pause $(LDFLAGS)
 
@@ -94,6 +94,6 @@ install_sysv:
 
 clean:
 	-rm -f halt pause
-	-rm -f $(STAGES) $(RCSCRIPTS) $(COMPAT)
+	-rm -f $(STAGES) $(RCSCRIPTS) $(SHUTDOWN)
 
 .PHONY: all install install_sysv clean
