@@ -1,0 +1,12 @@
+#!/bin/sh
+# vim: set ts=4 sw=4 et:
+
+PATH=/usr/bin:/usr/sbin
+
+. @RCDIR@/functions
+
+[ -r @RCDIR@/rc.sysinit ] && . @RCDIR@/rc.sysinit
+
+install -m100 /dev/null @RUNDIR@/stopit
+
+status "Initialization complete"

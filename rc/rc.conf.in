@@ -1,0 +1,13 @@
+# @RCDIR@/rc.conf - system configuration
+
+# Storage
+#
+# USEDMRAID="no"
+# USELVM="no"
+
+# Network
+#
+# interface=
+# address=
+# netmask=
+# gateway=
