@@ -7,6 +7,10 @@ PATH=/usr/bin:/usr/sbin
 
 load_conf '@RCDIR@/rc.conf'
 
+# mkdir -p -m0755 /run/lvm /run/user /run/lock /run/log
+
+mkdir -p -m0755 @RUNDIR@
+
 msg "Welcome to Artix Linux!"
 
 if [ -x /usr/bin/openrc ] && [ "$SVMANAGER" = "openrc" ]; then
@@ -28,7 +32,7 @@ fi
 #     chmod 0644 /var/log/dmesg.log
 # fi
 
-mkdir -p /run/runit
-install -m100 /dev/null /run/runit/stopit
+mkdir -p @RUNDIR@
+install -m100 /dev/null @RUNDIR@/stopit
 
 msg "Initialization complete, running stage 2..."

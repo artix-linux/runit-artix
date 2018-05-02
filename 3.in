@@ -7,8 +7,8 @@ PATH=/usr/bin:/usr/sbin
 detect_virt
 load_conf '@RCDIR@/rc.conf'
 
-if [ -e /run/runit/reboot ]; then
-    chmod 100 /run/runit/reboot
+if [ -e @RUNDIR@/reboot ]; then
+    chmod 100 @RUNDIR@/reboot
 fi
 
 [ -x @RCDIR@/rc.shutdown ] && @RCDIR@/rc.shutdown

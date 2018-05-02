@@ -14,11 +14,14 @@ SHUTDOWN = $(wildcard rc-shutdown/*.sh)
 RUNITDIR = $(SYSCONFDIR)/runit
 SVDIR = $(RUNITDIR)/sv
 RUNSVDIR = $(RUNITDIR)/runsvdir
-SERVICEDIR = $(SYSCONFDIR)/service
+
+SERVICEDIR = /etc/service
+RUNDIR = /run/runit
 
 BIN = zzz pause modules-load
-RC_BIN = halt shutdown
-RC_SCRIPTS =  functions crypt.awk rc.conf rc.local rc.shutdown
+RCBIN = halt shutdown
+SCRIPT = shutdown
+RCSCRIPTS =  functions crypt.awk rc.conf rc.local rc.shutdown
 STAGES = 1 2 3 ctrlaltdel
 
 LN = ln -sf
@@ -31,7 +34,10 @@ CHMODX = chmod +x
 
 EDIT = sed \
 	-e "s|@RCDIR[@]|$(RCDIR)|g" \
-	-e "s|@RUNITDIR[@]|$(RUNITDIR)|g"
+	-e "s|@RUNITDIR[@]|$(RUNITDIR)|g" \
+	-e "s|@SERVICEDIR[@]|$(SERVICEDIR)|g" \
+	-e "s|@RUNSVDIR[@]|$(RUNSVDIR)|g" \
+	-e "s|@RUNDIR[@]|$(RUNDIR)|g"
 
 %: %.in Makefile
 	@echo "GEN $@"
@@ -40,7 +46,7 @@ EDIT = sed \
 	@$(CHMODAW) "$@"
 	@$(CHMODX) "$@"
 
-all:	$(STAGES)
+all:	$(STAGES) $(SCRIPT)
 	$(CC) $(CFLAGS) halt.c -o halt $(LDFLAGS)
 	$(CC) $(CFLAGS) pause.c -o pause $(LDFLAGS)
 
@@ -52,7 +58,7 @@ install:
 	install -d $(DESTDIR)$(SHUTDOWNDIR)
 	install -m644 $(SHUTDOWN) $(DESTDIR)$(SHUTDOWNDIR)
 
-	install -m755 $(RC_SCRIPTS) $(DESTDIR)$(RCDIR)
+	install -m755 $(RCSCRIPTS) $(DESTDIR)$(RCDIR)
 
 	install -d $(DESTDIR)$(SVDIR)
 	$(CP) sv/* $(DESTDIR)$(SVDIR)/
@@ -60,21 +66,21 @@ install:
 	install -d $(DESTDIR)$(RUNSVDIR)
 	$(CP) runsvdir/* $(DESTDIR)$(RUNSVDIR)/
 
-	$(LN) runit/runsvdir/default $(DESTDIR)$(SERVICEDIR)
+# 	$(LN) runit/runsvdir/default $(DESTDIR)$(SERVICEDIR)
 
 	install -d $(DESTDIR)$(BINDIR)
 	install -m755 $(BIN) $(DESTDIR)$(BINDIR)
 
 	install -d $(DESTDIR)$(RCBINDIR)
-	install -m755 $(RC_BIN) $(DESTDIR)$(RCBINDIR)
+	install -m755 $(RCBIN) $(DESTDIR)$(RCBINDIR)
 
 	install -m755 $(STAGES) $(DESTDIR)$(RUNITDIR)
 
 	$(LN) halt $(DESTDIR)$(RCBINDIR)/poweroff
 	$(LN) halt $(DESTDIR)$(RCBINDIR)/reboot
 
-	$(LN) /run/runit/reboot $(DESTDIR)$(RUNITDIR)/
-	$(LN) /run/runit/stopit $(DESTDIR)$(RUNITDIR)/
+	$(LN) $(RUNDIR)/reboot $(DESTDIR)$(RUNITDIR)/
+	$(LN) $(RUNDIR)/stopit $(DESTDIR)$(RUNITDIR)/
 
 	install -d $(DESTDIR)$(MANDIR)/man1
 	install -m644 pause.1 $(DESTDIR)$(MANDIR)/man1
@@ -96,6 +102,6 @@ install_sysv:
 
 clean:
 	-rm -f halt pause
-	-rm -f $(STAGES)
+	-rm -f $(STAGES) $(SCRIPT)
 
 .PHONY: all install install_sysv clean
