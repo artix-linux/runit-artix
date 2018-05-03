@@ -1,0 +1,22 @@
+#!/bin/bash
+
+PATH=/usr/bin:/usr/sbin
+
+. @RUNITDIR@/functions
+
+status "Running stage 2"
+
+runlevel=default
+for arg in $(cat /proc/cmdline); do
+    if [ -d @RUNITDIR@/runsvdir/"$arg" ]; then
+        status "Runlevel detected: '$arg' (via kernel cmdline)"
+        runlevel="$arg"
+    fi
+done
+
+runsvchdir "${runlevel}"
+# mkdir -p @RUNDIR@/runsvdir
+ln -s @RUNSVDIR@/current @SERVICEDIR@
+
+exec env - PATH=$PATH \
+runsvdir -P @SERVICEDIR@ 'log: ...........................................................................................................................................................................................................................................................................................................................................................................................................'

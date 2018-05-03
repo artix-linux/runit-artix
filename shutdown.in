@@ -37,7 +37,7 @@ time=$1; shift
 message="${*:-system is going down}"
 
 if [ "$action" = "cancel" ]; then
-  kill "$(cat /run/runit/shutdown.pid)"
+  kill "$(cat @RUNDIR@/shutdown.pid)"
   if [ -e /etc/nologin ] && ! [ -s /etc/nologin ]; then
     rm /etc/nologin
   fi
@@ -45,8 +45,8 @@ if [ "$action" = "cancel" ]; then
   exit
 fi
 
-touch /run/runit/shutdown.pid 2>/dev/null || abort "Not enough permissions to execute ${0#*/}"
-echo $$ >/run/runit/shutdown.pid
+touch @RUNDIR@/shutdown.pid 2>/dev/null || abort "Not enough permissions to execute ${0#*/}"
+echo $$ >@RUNDIR@/shutdown.pid
 
 case "$time" in
   now) time=0;;
