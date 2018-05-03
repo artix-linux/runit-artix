@@ -35,7 +35,7 @@ awk '$4 == 1 { system("mountpoint -q /sys/fs/cgroup/" $1 " || { mkdir -p /sys/fs
 # fi
 
 # log all console messages
-bootlogd -p /run/bootlogd.pid
+bootlogd_start
 
 run_hook sysinit_start
 

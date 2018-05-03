@@ -428,6 +428,11 @@ bootlogd_stop() {
 	rm -f /run/bootlogd.pid
 }
 
+bootlogd_start(){
+    [[ ! -f /var/log/boot ]] && touch /var/log/boot
+    bootlogd -p /run/bootlogd.pid
+}
+
 console_setup(){
     TTYS=${TTYS:-6}
     if [ -n "$FONT" ]; then
