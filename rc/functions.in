@@ -576,7 +576,7 @@ PREFIX_REG="::"
 PREFIX_HL=" >"
 
 # Source additional functions at the end to allow overrides
-# for f in @RUNITDIR@/functions.d/*; do
+# for f in @RCDIR@/functions.d/*; do
 # 	[[ -e $f ]] && . "$f"
 # done
 

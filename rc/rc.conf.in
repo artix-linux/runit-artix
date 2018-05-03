@@ -1,4 +1,4 @@
-# @RUNITDIR@/runit.conf - system configuration
+# @RCDIR@/rc.conf - system configuration
 
 # Storage
 #

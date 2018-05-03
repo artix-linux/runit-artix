@@ -1,0 +1,163 @@
+#!/bin/bash
+
+. @RCDIR@/rc.conf
+. @RCDIR@/functions
+
+unset HOSTNAME
+
+if [[ -s /etc/hostname ]]; then
+	HOSTNAME=$(< /etc/hostname)
+fi
+
+# Prints distro name and URL
+print_welcome
+
+# mount the API filesystems
+# /proc, /sys, /run, /dev, /run/lock, /dev/pts, /dev/shm
+mountpoint -q /proc    || mount -t proc proc /proc -o nosuid,noexec,nodev
+mountpoint -q /sys     || mount -t sysfs sys /sys -o nosuid,noexec,nodev
+mountpoint -q /run     || mount -t tmpfs run /run -o mode=0755,nosuid,nodev
+mountpoint -q /dev     || mount -t devtmpfs dev /dev -o mode=0755,nosuid
+mkdir -p /dev/{pts,shm}
+mountpoint -q /dev/pts || mount -t devpts devpts /dev/pts -o mode=0620,gid=5,nosuid,noexec
+mountpoint -q /dev/shm || mount -t tmpfs shm /dev/shm -o mode=1777,nosuid,nodev
+mountpoint -q /sys/fs/cgroup || mount -o mode=0755 -t tmpfs cgroup /sys/fs/cgroup
+mountpoint -q /sys/fs/cgroup/openrc || mkdir -p /sys/fs/cgroup/openrc && mount -t cgroup -o none,name=openrc cgroup /sys/fs/cgroup/openrc
+awk '$4 == 1 { system("mountpoint -q /sys/fs/cgroup/" $1 " || { mkdir -p /sys/fs/cgroup/" $1 " && mount -t cgroup -o " $1 " cgroup /sys/fs/cgroup/" $1 " ;}" ) }' /proc/cgroups
+
+# if [[ ! -e /run/initramfs/root-fsck ]]; then
+	# remount root ro to allow for fsck later on, we remount now to
+	# make sure nothing can open files rw on root which would block a remount
+	findmnt / --options ro &>/dev/null ||
+		status "Mounting root read-only" mount -o remount,ro /
+# fi
+
+# log all console messages
+bootlogd_start
+
+run_hook sysinit_start
+
+if [[ $HOSTNAME ]]; then
+	stat_busy "Setting hostname: $HOSTNAME"
+	echo "$HOSTNAME" >| /proc/sys/kernel/hostname && stat_done || stat_fail
+fi
+
+HWCLOCK_PARAMS="--systz"
+
+if [[ $HARDWARECLOCK ]]; then
+
+	[[ -f /etc/adjtime ]] && { read ; read ; read ADJTIME; } < /etc/adjtime
+
+	if [[ $ADJTIME == 'LOCAL' ]]; then
+		if	[[ $HARDWARECLOCK == 'UTC' ]]; then
+			printf "${C_FAIL}@RCDIR@/rc.conf says the RTC is in UTC, but /etc/adjtime says it is in localtime.\n${C_OTHER}."
+		fi
+	else
+		if [[ $HARDWARECLOCK == 'LOCALTIME' ]]; then
+			printf "${C_FAIL}@RCDIR@/rc.conf says the RTC is in localtime, but hwclock (/etc/adjtime) thinks it is in UTC.\n${C_OTHER}."
+		fi
+	fi
+
+	case $HARDWARECLOCK in
+		UTC) HWCLOCK_PARAMS+=" --utc --noadjfile";;
+		localtime) HWCLOCK_PARAMS+=" --localtime --noadjfile";;
+		*) HWCLOCK_PARAMS="";;
+	esac
+fi
+
+if [[ $HWCLOCK_PARAMS ]]; then
+	stat_busy "Adjusting system time and setting kernel time zone"
+
+	# Adjust the system time for time zone offset if rtc is not in UTC, as
+	# filesystem checks can depend on system time. This also sets the kernel
+	# time zone, used by e.g. vfat.
+
+	hwclock $HWCLOCK_PARAMS && stat_done || stat_fail
+
+	unset TZ
+fi
+
+status "Creating list of required static device nodes" mk_kmod_static_nodes
+
+status "Setting up tmpfiles.d entries for /dev" mk_tmpfiles_dev
+
+# Start/trigger udev, load MODULES, and settle udev
+udevd_modprobe sysinit
+
+# this must be done after udev has loaded the KMS modules
+status 'Configuring virtual consoles' console_setup
+
+# bring up the loopback interface
+[[ -d /sys/class/net/lo ]] &&
+	status "Bringing up loopback interface" ip link set up dev lo
+
+# FakeRAID devices detection
+[[ $USEDMRAID = [Yy][Ee][Ss] && -x $(type -P dmraid) ]] &&
+	status "Activating FakeRAID arrays" dmraid -i -ay
+
+# Activate LVM2 groups, if any
+activate_vgs
+
+# Set up non-root encrypted partition mappings
+if [[ -f /etc/crypttab ]] && type -p cryptsetup >/dev/null; then
+	read_crypttab do_unlock
+	# Maybe someone has LVM on an encrypted block device
+	activate_vgs
+fi
+
+# Check filesystems
+run_hook sysinit_prefsck
+if [[ -x $(type -P fsck) ]]; then
+	stat_busy "Checking filesystems"
+		fsck_all >|"${FSCK_OUT:-/dev/stdout}" 2>|"${FSCK_ERR:-/dev/stdout}"
+	declare -r fsckret=$?
+	(( fsckret <= 1 )) && stat_done || stat_fail
+else
+	declare -r fsckret=0
+fi
+run_hook sysinit_postfsck
+
+# Single-user login and/or automatic reboot if needed
+fsck_reboot $fsckret
+
+status "Remounting root and API filesystems" \
+	mount -o remount,rw /
+
+# Now mount all the local filesystems
+run_hook sysinit_premount
+status "Mounting local filesystems" \
+	mount_all
+run_hook sysinit_postmount
+
+# Enable monitoring of LVM2 groups, now that the filesystems are mounted rw
+[[ $USELVM = [Yy][Ee][Ss] && -x $(type -P lvm) && -d /sys/block ]] &&
+	status "Activating monitoring of LVM2 groups" \
+		vgchange --monitor y >/dev/null
+
+status "Activating swap" swapon -a
+
+[[ $TIMEZONE ]] && status "Configuring time zone" set_timezone "$TIMEZONE"
+
+status 'Initializing random seed' init_random_seed
+
+status "Setting up tmpfiles.d entries" mk_tmpfiles_setup
+
+status "Setting up sysusers.d entries" mk_sysusers
+
+# Remove leftover files
+# remove_leftover
+
+stat_busy "Saving dmesg log"
+	if [[ -e /proc/sys/kernel/dmesg_restrict ]] &&
+		(( $(< /proc/sys/kernel/dmesg_restrict) == 1 )); then
+		install -Tm 0600 <( dmesg ) /var/log/dmesg.log
+	else
+		install -Tm 0644 <( dmesg ) /var/log/dmesg.log
+	fi
+(( $? == 0 )) && stat_done || stat_fail
+
+run_hook sysinit_end
+
+install -m100 /dev/null @RUNDIR@/stopit
+
+cleanup_1

@@ -10,16 +10,17 @@ SVDIR = $(RUNITDIR)/sv
 RUNSVDIR = $(RUNITDIR)/runsvdir
 SERVICEDIR = /etc/service
 RUNDIR = /run/runit
+RCDIR = $(SYSCONFDIR)/rc
 
 TMPFILES = tmpfile.conf
 
-BIN = zzz pause modules-load bootlogd
+BIN = zzz pause modules-load
 
 RCBIN = halt shutdown
 
-SHUTDOWN = shutdown
+RC = rc/rc.sysinit rc/rc.shutdown rc/functions rc/rc.conf
 
-STAGES = 1 2 3 ctrlaltdel functions runit.conf
+STAGES = 1 2 3 ctrlaltdel
 
 LN = ln -sf
 CP = cp -R --no-dereference --preserve=mode,links -v
@@ -33,7 +34,8 @@ EDIT = sed \
 	-e "s|@RUNITDIR[@]|$(RUNITDIR)|g" \
 	-e "s|@SERVICEDIR[@]|$(SERVICEDIR)|g" \
 	-e "s|@RUNSVDIR[@]|$(RUNSVDIR)|g" \
-	-e "s|@RUNDIR[@]|$(RUNDIR)|g"
+	-e "s|@RUNDIR[@]|$(RUNDIR)|g" \
+	-e "s|@RCDIR[@]|$(RCDIR)|g"
 
 %: %.in Makefile
 	@echo "GEN $@"
@@ -42,13 +44,15 @@ EDIT = sed \
 	@$(CHMODAW) "$@"
 	@$(CHMODX) "$@"
 
-all:	$(STAGES) shutdown
+all:	$(STAGES) shutdown $(RC)
 	$(CC) $(CFLAGS) halt.c -o halt $(LDFLAGS)
 	$(CC) $(CFLAGS) pause.c -o pause $(LDFLAGS)
-	$(CC) -ansi -O2 -fomit-frame-pointer -W -Wall -D_GNU_SOURCE bootlogd.c -o bootlogd $(LDFLAGS) -lutil
 
 install:
 	### rc
+
+	install -d $(DESTDIR)$(RCDIR)
+	install -m755 $(RC) $(DESTDIR)$(RCDIR)
 
 	install -d $(DESTDIR)$(RCBINDIR)
 	install -m644 $(RCBIN) $(DESTDIR)$(RCBINDIR)
@@ -81,7 +85,6 @@ install:
 	install -d $(DESTDIR)$(MANDIR)/man8
 	install -m644 zzz.8 $(DESTDIR)$(MANDIR)/man8/zzz.8
 	install -m644 modules-load.8 $(DESTDIR)$(MANDIR)/man8
-	install -m644 bootlogd.8 $(DESTDIR)$(MANDIR)/man8/bootlogd.8
 
 install_sysv:
 	install -d $(DESTDIR)$(PREFIX)/bin
@@ -96,7 +99,7 @@ install_sysv:
 	$(LN) halt.8 $(DESTDIR)$(MANDIR)/man8/reboot.8
 
 clean:
-	-rm -f halt pause bootlogd
-	-rm -f $(STAGES) shutdown
+	-rm -f halt pause
+	-rm -f $(STAGES) shutdown $(RC)
 
 .PHONY: all install install_sysv clean

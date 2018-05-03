@@ -2,7 +2,7 @@
 
 PATH=/usr/bin:/usr/sbin
 
-. @RUNITDIR@/functions
+. @RCDIR@/functions
 
 status "Running stage 2"
 
