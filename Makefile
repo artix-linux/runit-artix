@@ -3,22 +3,18 @@ PREFIX ?= /usr
 BINDIR = $(PREFIX)/bin
 MANDIR = $(PREFIX)/share/man
 LIBDIR = $(PREFIX)/lib
-RCBINDIR = $(PREFIX)/lib/runit/bin
 TMPFILESDIR = $(LIBDIR)/tmpfiles.d
 RUNITDIR = $(SYSCONFDIR)/runit
 SVDIR = $(RUNITDIR)/sv
 RUNSVDIR = $(RUNITDIR)/runsvdir
 SERVICEDIR = /etc/service
 RUNDIR = /run/runit
+RCBINDIR = $(PREFIX)/lib/rc/bin
 RCDIR = $(SYSCONFDIR)/rc
 
 TMPFILES = tmpfile.conf
 
 BIN = zzz pause modules-load
-
-RCBIN = halt shutdown
-
-RC = rc/rc.sysinit rc/rc.shutdown rc/functions rc/rc.conf
 
 STAGES = 1 2 3 ctrlaltdel
 
@@ -30,12 +26,13 @@ M4 = m4 -P
 CHMODAW = chmod a-w
 CHMODX = chmod +x
 
+HASRC = yes
+
 EDIT = sed \
 	-e "s|@RUNITDIR[@]|$(RUNITDIR)|g" \
 	-e "s|@SERVICEDIR[@]|$(SERVICEDIR)|g" \
 	-e "s|@RUNSVDIR[@]|$(RUNSVDIR)|g" \
-	-e "s|@RUNDIR[@]|$(RUNDIR)|g" \
-	-e "s|@RCDIR[@]|$(RCDIR)|g"
+	-e "s|@RUNDIR[@]|$(RUNDIR)|g"
 
 %: %.in Makefile
 	@echo "GEN $@"
@@ -44,24 +41,23 @@ EDIT = sed \
 	@$(CHMODAW) "$@"
 	@$(CHMODX) "$@"
 
-all:	$(STAGES) shutdown $(RC)
-	$(CC) $(CFLAGS) halt.c -o halt $(LDFLAGS)
-	$(CC) $(CFLAGS) pause.c -o pause $(LDFLAGS)
 
-install:
-	### rc
 
-	install -d $(DESTDIR)$(RCDIR)
-	install -m755 $(RC) $(DESTDIR)$(RCDIR)
+all: all-runit
 
-	install -d $(DESTDIR)$(RCBINDIR)
-	install -m644 $(RCBIN) $(DESTDIR)$(RCBINDIR)
+ifeq ($(HASRC),yes)
 
-	$(LN) halt $(DESTDIR)$(RCBINDIR)/poweroff
-	$(LN) halt $(DESTDIR)$(RCBINDIR)/reboot
+all: all-rc
 
-	### runit
+endif
 
+all-runit: $(STAGES)
+		$(CC) $(CFLAGS) pause.c -o pause $(LDFLAGS)
+
+all-rc:
+	make RCDIR=$(RCDIR) -C rc
+
+install-runit:
 	install -d $(DESTDIR)$(RUNITDIR)
 	install -m755 $(STAGES) $(DESTDIR)$(RUNITDIR)
 
@@ -86,20 +82,27 @@ install:
 	install -m644 zzz.8 $(DESTDIR)$(MANDIR)/man8/zzz.8
 	install -m644 modules-load.8 $(DESTDIR)$(MANDIR)/man8
 
-install_sysv:
-	install -d $(DESTDIR)$(PREFIX)/bin
-	$(LN) runit-init $(DESTDIR)$(BINDIR)/init
-	$(LN) $(RCBINDIR)/halt $(DESTDIR)$(BINDIR)/halt
-	$(LN) $(RCBINDIR)/shutdown $(DESTDIR)$(BINDIR)/shutdown
-	$(LN) halt $(DESTDIR)$(BINDIR)/poweroff
-	$(LN) halt $(DESTDIR)$(BINDIR)/reboot
-	install -m644 shutdown.8 $(DESTDIR)$(MANDIR)/man8/shutdown.8
-	install -m644 halt.8 $(DESTDIR)$(MANDIR)/man8/halt.8
-	$(LN) halt.8 $(DESTDIR)$(MANDIR)/man8/poweroff.8
-	$(LN) halt.8 $(DESTDIR)$(MANDIR)/man8/reboot.8
+install-rc:
+	make install BINDIR=$(BINDIR) RCDIR=$(RCDIR) RCBINDIR=$(RCBINDIR) MANDIR=$(MANDIR) DESTDIR=$(DESTDIR) -C rc
+
+install: install-runit
+ifeq ($(HASRC),yes)
+install: install-rc
+endif
+
+clean-runit:
+	-rm -f pause
+	-rm -f $(STAGES)
+
+clean-rc:
+	make -C rc clean
+
+clean: clean-runit
+ifeq ($(HASRC),yes)
+clean: clean-rc
+endif
 
 clean:
-	-rm -f halt pause
-	-rm -f $(STAGES) shutdown $(RC)
 
-.PHONY: all install install_sysv clean
+
+.PHONY: all install clean install-runit install-rc clean-runit clean-rc all-runit all-rc
