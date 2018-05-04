@@ -292,23 +292,12 @@ do_unlock() {
 	return $?
 }
 
-do_lock() {
-	status "Detaching encrypted device ${1}" /usr/bin/cryptsetup detach "$1" >/dev/null
-}
-
-read_crypttab() {
-	# $1 = function to call with the split out line from the crypttab
-	local line nspo failed=0
-	while read line <&3; do
-		[[ $line && $line != '#'* ]] || continue
-		eval nspo=("${line%#*}")
-		if $1 "${nspo[0]}" "${nspo[1]}" "${nspo[2]}" "${nspo[*]:3}"; then
-			crypto_unlocked=1
-		else
-			failed=1
-		fi
-	done 3< /etc/crypttab
-	return $failed
+deactivate_crypt() {
+	if [[ -x /usr/bin/dmsetup ]]; then
+		for v in $(dmsetup ls --target crypt --exec "dmsetup info -c --noheadings -o open,name"); do
+			[[ ${v%%:*} == "0" ]] && cryptsetup close ${v##*:}
+		done
+	fi
 }
 
 set_timezone() {
