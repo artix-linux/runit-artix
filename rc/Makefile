@@ -25,6 +25,7 @@ install:
 
 	install -d $(DESTDIR)$(RCBINDIR)
 	install -m644 $(RCBIN) $(DESTDIR)$(RCBINDIR)
+	install -m644 crypt.awk $(DESTDIR)$(RCBINDIR)
 
 	$(LN) halt $(DESTDIR)$(RCBINDIR)/poweroff
 	$(LN) halt $(DESTDIR)$(RCBINDIR)/reboot
