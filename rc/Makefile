@@ -1,5 +1,5 @@
 RCBIN = halt shutdown
-RC = rc.sysinit rc.shutdown functions rc.conf
+RC = rc.local rc.shutdown functions rc.conf
 
 LN = ln -sf
 RM = rm -f

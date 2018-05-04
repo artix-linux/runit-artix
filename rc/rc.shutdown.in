@@ -1,23 +1,4 @@
-#!/bin/bash
-
-. @RCDIR@/functions
-. @RCDIR@/rc.conf
-
-# avoid staircase effect
-stty onlcr
-
-echo " "
-printhl "Initiating shutdown..."
-echo " "
-
-run_hook shutdown_start
-
-run_hook shutdown_prekillall
-
-run_hook shutdown_postkillall
-
-run_hook shutdown_preumount
-
-run_hook shutdown_postumount
-
-run_hook shutdown_poweroff
+# Default rc.shutdown; add your custom commands here.
+#
+# This is run by runit in stage 3 after the services are stopped
+# (see /etc/runit/3).
