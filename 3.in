@@ -22,13 +22,9 @@ echo " "
 
 run_hook shutdown_start
 
-run_hook shutdown_prekillall
-
-run_hook shutdown_postkillall
-
-run_hook shutdown_preumount
-
-run_hook shutdown_postumount
+for shutdown in @RCDIR@/shutdown.d/*; do
+	. $shutdown
+done
 
 run_hook shutdown_poweroff
 

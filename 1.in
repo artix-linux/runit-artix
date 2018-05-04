@@ -13,16 +13,9 @@ bootlogd_start
 
 run_hook sysinit_start
 
-# Check filesystems
-run_hook sysinit_prefsck
-
-run_hook sysinit_postfsck
-
-
-# Now mount all the local filesystems
-run_hook sysinit_premount
-
-run_hook sysinit_postmount
+for sysinit in @RCDIR@/sysinit.d/*; do
+	. $sysinit
+done
 
 # Remove leftover files
 # remove_leftover
