@@ -6,7 +6,7 @@
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 # clear the TZ envvar, so daemons always respect /etc/localtime
-unset TZ
+# unset TZ
 
 . /etc/profile.d/locale.sh
 
