@@ -1,8 +1,10 @@
 if [ -z "$VIRTUALIZATION" ]; then
-    msg "Unmounting filesystems, disabling swap..."
+    stat_busy "Unmounting filesystems, disabling swap..."
     swapoff -a
     umount -r -a -t nosysfs,noproc,nodevtmpfs,notmpfs
-    msg "Remounting rootfs read-only..."
+    stat_done
+    stat_busy "Remounting rootfs read-only..."
     mount -o remount,ro /
+    stat_done
 fi
 sync

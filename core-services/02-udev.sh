@@ -2,23 +2,15 @@
 
 [ -n "$VIRTUALIZATION" ] && return 0
 
-if [ -x /usr/lib/systemd/systemd-udevd ]; then
-    _udevd=/usr/lib/systemd/systemd-udevd
-elif [ -x /sbin/udevd -o -x /bin/udevd ]; then
-    _udevd=udevd
-else
-    msg_warn "cannot find udevd!"
-fi
-
 if [ -x /usr/bin/tmpfiles ]; then
-    msg "Setting up tmpfiles.d entries for /dev..."
-    tmpfiles --prefix=/dev --create --boot
+    status "Setting up tmpfiles.d entries for /dev..." tmpfiles --prefix=/dev --create --boot
 fi
 
-if [ -n "${_udevd}" ]; then
-    msg "Starting udev and waiting for devices to settle..."
-    ${_udevd} --daemon
+status "Starting udev daemon" udevd --daemon
+
+stat_busy "Triggering udev uevents"
     udevadm trigger --action=add --type=subsystems
     udevadm trigger --action=add --type=devices
-    udevadm settle
-fi
+stat_done
+
+status "Waiting for udev uevents to be processed" udevadm settle

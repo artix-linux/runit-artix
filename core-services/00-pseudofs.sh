@@ -1,6 +1,6 @@
 # vim: set ts=4 sw=4 et:
 
-msg "Mounting pseudo-filesystems..."
+stat_busy "Mounting pseudo-filesystems..."
 mountpoint -q /proc || mount -o nosuid,noexec,nodev -t proc proc /proc
 mountpoint -q /sys || mount -o nosuid,noexec,nodev -t sysfs sys /sys
 mountpoint -q /run || mount -o mode=0755,nosuid,nodev -t tmpfs run /run
@@ -15,3 +15,4 @@ if [ -z "$VIRTUALIZATION" ]; then
     mountpoint -q /sys/fs/cgroup/openrc || mkdir -p /sys/fs/cgroup/openrc && mount -t cgroup -o none,name=openrc cgroup /sys/fs/cgroup/openrc
     awk '$4 == 1 { system("mountpoint -q /sys/fs/cgroup/" $1 " || { mkdir -p /sys/fs/cgroup/" $1 " && mount -t cgroup -o " $1 " cgroup /sys/fs/cgroup/" $1 " ;}" ) }' /proc/cgroups
 fi
+stat_done

@@ -1,4 +1,3 @@
 if [ -z "$VIRTUALIZATION" ]; then
-    msg "Stopping udev..."
-    udevadm control --exit
+    status "Stopping udev..." udevadm control --exit
 fi

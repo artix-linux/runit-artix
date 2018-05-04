@@ -1,7 +1,7 @@
 # vim: set ts=4 sw=4 et:
 
 if [ -x /sbin/sysctl -o -x /bin/sysctl ]; then
-    msg "Loading sysctl(8) settings..."
+    stat_busy "Loading sysctl(8) settings..."
     for i in /run/sysctl.d/*.conf \
         /usr/local/lib/sysctl.d/*.conf \
         /usr/lib/sysctl.d/*.conf \
@@ -13,4 +13,5 @@ if [ -x /sbin/sysctl -o -x /bin/sysctl ]; then
             sysctl -p "$i"
         fi
     done
+    stat_done
 fi

@@ -1,31 +1,30 @@
 # vim: set ts=4 sw=4 et:
 
-msg "Initializing random seed..."
+stat_busy "Initializing random seed..."
 cp /var/lib/random-seed /dev/urandom >/dev/null 2>&1 || true
 ( umask 077; bytes=$(cat /proc/sys/kernel/random/poolsize) || bytes=512; dd if=/dev/urandom of=/var/lib/random-seed count=1 bs=$bytes >/dev/null 2>&1 )
+stat_done
 
-msg "Setting up loopback interface..."
-ip link set up dev lo
+status "Setting up loopback interface..." ip link set up dev lo
 
 [ -r /etc/hostname ] && read -r HOSTNAME < /etc/hostname
 if [ -n "$HOSTNAME" ]; then
-    msg "Setting up hostname to '${HOSTNAME}'..."
+    stat_busy "Setting up hostname to '${HOSTNAME}'..."
     printf "%s" "$HOSTNAME" > /proc/sys/kernel/hostname
+    stat_done
 else
-    msg_warn "Didn't setup a hostname!"
+    printf "Didn't setup a hostname!\n"
 fi
 
 if [ -n "$TIMEZONE" ]; then
-    msg "Setting up timezone to '${TIMEZONE}'..."
+    status "Setting up timezone to '${TIMEZONE}'..."
     ln -sf "/usr/share/zoneinfo/$TIMEZONE" /etc/localtime
 fi
 
-msg "Setting up sysusers.d entries..."
 if [ -x /usr/bin/sysusers ]; then
-    sysusers
+    status "Setting up sysusers.d entries..." sysusers
 fi
 
-msg "Setting up tmpfiles.d entries..."
 if [ -x /usr/bin/tmpfiles ]; then
-    tmpfiles --exclude-prefix=/dev --create --remove --boot
+    status "Setting up tmpfiles.d entries..." tmpfiles --exclude-prefix=/dev --create --remove --boot
 fi
