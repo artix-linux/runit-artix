@@ -26,10 +26,10 @@ install:
 	install -m755 $(RC) $(DESTDIR)$(RCDIR)
 	install -m644 sysinit.d/* $(DESTDIR)$(RCDIR)/sysinit.d
 	install -m644 shutdown.d/* $(DESTDIR)$(RCDIR)/shutdown.d
+	install -m644 crypt.awk $(DESTDIR)$(RCDIR)
 
 	install -d $(DESTDIR)$(RCBINDIR)
 	install -m644 $(RCBIN) $(DESTDIR)$(RCBINDIR)
-	install -m644 crypt.awk $(DESTDIR)$(RCBINDIR)
 
 	$(LN) halt $(DESTDIR)$(RCBINDIR)/poweroff
 	$(LN) halt $(DESTDIR)$(RCBINDIR)/reboot

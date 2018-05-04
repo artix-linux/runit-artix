@@ -1,3 +1,3 @@
-shutdown_preumount
+run_hook shutdown_preumount
 status "Unmounting non-API filesystems" umount_all
-shutdown_postumount
+run_hook shutdown_postumount

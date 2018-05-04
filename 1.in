@@ -24,7 +24,4 @@ run_hook sysinit_end
 
 install -m100 /dev/null @RUNDIR@/stopit
 
-cleanup_sysinit
-
-
 status "Initialization complete"
