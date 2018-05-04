@@ -1,55 +1,109 @@
-PREFIX ?=	/usr
-SCRIPTS=	1 2 3 ctrlaltdel
+SYSCONFDIR = /etc
+PREFIX ?= /usr
+BINDIR = $(PREFIX)/bin
+MANDIR = $(PREFIX)/share/man
+LIBDIR = $(PREFIX)/lib
+TMPFILESDIR = $(LIBDIR)/tmpfiles.d
+RUNITDIR = $(SYSCONFDIR)/runit
+SVDIR = $(RUNITDIR)/sv
+RUNSVDIR = $(RUNITDIR)/runsvdir
+SERVICEDIR = /etc/service
+RUNDIR = /run/runit
+RCBINDIR = $(PREFIX)/lib/rc/bin
+RCDIR = $(SYSCONFDIR)/rc
 
-all:
-	$(CC) $(CFLAGS) halt.c -o halt $(LDFLAGS)
-	$(CC) $(CFLAGS) pause.c -o pause $(LDFLAGS)
+TMPFILES = tmpfile.conf
 
-install:
-	install -d ${DESTDIR}${PREFIX}/bin
-	install -d ${DESTDIR}${PREFIX}/lib/runit-artix/bin
-	install -m755 pause ${DESTDIR}${PREFIX}/bin/pause
-	install -m755 modules-load ${DESTDIR}${PREFIX}/bin/modules-load
-	install -m755 zzz ${DESTDIR}${PREFIX}/bin/zzz
-	install -m755 halt ${DESTDIR}${PREFIX}/lib/runit-artix/bin/halt
-	install -m755 shutdown ${DESTDIR}${PREFIX}/lib/runit-artix/bin/shutdown
-	ln -sf halt ${DESTDIR}${PREFIX}/lib/runit-artix/bin/poweroff
-	ln -sf halt ${DESTDIR}${PREFIX}/lib/runit-artix/bin/reboot
-	install -d ${DESTDIR}${PREFIX}/share/man/man1
-	install -m644 pause.1 ${DESTDIR}${PREFIX}/share/man/man1
-	install -d ${DESTDIR}${PREFIX}/share/man/man8
-	install -m644 zzz.8 ${DESTDIR}${PREFIX}/share/man/man8/zzz.8
-	install -m644 modules-load.8 ${DESTDIR}${PREFIX}/share/man/man8
-	install -d ${DESTDIR}/etc/runit/sv
-	install -d ${DESTDIR}/etc/runit/runsvdir
-	install -d ${DESTDIR}/etc/runit/core-services
-	install -d ${DESTDIR}/etc/runit/shutdown-services
-	install -m644 core-services/*.sh ${DESTDIR}/etc/runit/core-services
-	install -m644 shutdown-services/*.sh ${DESTDIR}/etc/runit/shutdown-services
-	install -m755 ${SCRIPTS} ${DESTDIR}/etc/runit
-	install -m644 functions $(DESTDIR)/etc/runit
-	install -m644 crypt.awk  ${DESTDIR}/etc/runit
-	install -m644 rc.conf ${DESTDIR}/etc/runit
-	install -m755 rc.local ${DESTDIR}/etc/runit
-	install -m755 rc.shutdown ${DESTDIR}/etc/runit
-	ln -sf /run/runit/reboot ${DESTDIR}/etc/runit/
-	ln -sf /run/runit/stopit ${DESTDIR}/etc/runit/
-	cp -R --no-dereference --preserve=mode,links -v runsvdir/* ${DESTDIR}/etc/runit/runsvdir/
-	cp -R --no-dereference --preserve=mode,links -v services/* ${DESTDIR}/etc/runit/sv/
+BIN = zzz pause modules-load
 
-install_sysv:
-	install -d ${DESTDIR}${PREFIX}/bin
-	ln -sf runit-init ${DESTDIR}${PREFIX}/bin/init
-	ln -sf ${PREFIX}/lib/runit-artix/bin/halt ${DESTDIR}${PREFIX}/bin/halt
-	ln -sf ${PREFIX}/lib/runit-artix/bin/shutdown ${DESTDIR}${PREFIX}/bin/shutdown
-	ln -sf halt ${DESTDIR}${PREFIX}/bin/poweroff
-	ln -sf halt ${DESTDIR}${PREFIX}/bin/reboot
-	install -m644 shutdown.8 ${DESTDIR}${PREFIX}/share/man/man8/shutdown.8
-	install -m644 halt.8 ${DESTDIR}${PREFIX}/share/man/man8/halt.8
-	ln -sf halt.8 ${DESTDIR}${PREFIX}/share/man/man8/poweroff.8
-	ln -sf halt.8 ${DESTDIR}${PREFIX}/share/man/man8/reboot.8
+STAGES = 1 2 3 ctrlaltdel
+
+LN = ln -sf
+CP = cp -R --no-dereference --preserve=mode,links -v
+RM = rm -f
+RMD = rm -fr --one-file-system
+M4 = m4 -P
+CHMODAW = chmod a-w
+CHMODX = chmod +x
+
+HASRC = yes
+
+EDIT = sed \
+	-e "s|@RUNITDIR[@]|$(RUNITDIR)|g" \
+	-e "s|@SERVICEDIR[@]|$(SERVICEDIR)|g" \
+	-e "s|@RUNSVDIR[@]|$(RUNSVDIR)|g" \
+	-e "s|@RUNDIR[@]|$(RUNDIR)|g" \
+	-e "s|@RCDIR[@]|$(RCDIR)|g"
+
+%: %.in Makefile
+	@echo "GEN $@"
+	@$(RM) "$@"
+	@$(M4) $@.in | $(EDIT) >$@
+	@$(CHMODAW) "$@"
+	@$(CHMODX) "$@"
+
+
+
+all: all-runit
+
+ifeq ($(HASRC),yes)
+
+all: all-rc
+
+endif
+
+all-runit: $(STAGES)
+		$(CC) $(CFLAGS) pause.c -o pause $(LDFLAGS)
+
+all-rc:
+	make RCDIR=$(RCDIR) -C rc
+
+install-runit:
+	install -d $(DESTDIR)$(RUNITDIR)
+	install -m755 $(STAGES) $(DESTDIR)$(RUNITDIR)
+
+	$(LN) $(RUNDIR)/reboot $(DESTDIR)$(RUNITDIR)/
+	$(LN) $(RUNDIR)/stopit $(DESTDIR)$(RUNITDIR)/
+
+	install -d $(DESTDIR)$(SVDIR)
+	$(CP) sv/* $(DESTDIR)$(SVDIR)/
+
+	install -d $(DESTDIR)$(RUNSVDIR)
+	$(CP) runsvdir/* $(DESTDIR)$(RUNSVDIR)/
+
+	install -d $(DESTDIR)$(BINDIR)
+	install -m755 $(BIN) $(DESTDIR)$(BINDIR)
+
+	install -d $(DESTDIR)$(TMPFILESDIR)
+	install -m755 $(TMPFILES) $(DESTDIR)$(TMPFILESDIR)/runit.conf
+
+	install -d $(DESTDIR)$(MANDIR)/man1
+	install -m644 pause.1 $(DESTDIR)$(MANDIR)/man1
+	install -d $(DESTDIR)$(MANDIR)/man8
+	install -m644 zzz.8 $(DESTDIR)$(MANDIR)/man8/zzz.8
+	install -m644 modules-load.8 $(DESTDIR)$(MANDIR)/man8
+
+install-rc:
+	make install BINDIR=$(BINDIR) RCDIR=$(RCDIR) RCBINDIR=$(RCBINDIR) MANDIR=$(MANDIR) DESTDIR=$(DESTDIR) -C rc
+
+install: install-runit
+ifeq ($(HASRC),yes)
+install: install-rc
+endif
+
+clean-runit:
+	-rm -f pause
+	-rm -f $(STAGES)
+
+clean-rc:
+	make -C rc clean
+
+clean: clean-runit
+ifeq ($(HASRC),yes)
+clean: clean-rc
+endif
 
 clean:
-	-rm -f halt pause
 
-.PHONY: all install install_sysv clean
+
+.PHONY: all install clean install-runit install-rc clean-runit clean-rc all-runit all-rc

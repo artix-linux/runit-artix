@@ -1,0 +1,538 @@
+#!/bin/bash
+# rc functions
+#
+
+# sanitize PATH (will be overridden later when /etc/profile is sourced but is useful for udev)
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+# clear the TZ envvar, so daemons always respect /etc/localtime
+# unset TZ
+
+. /etc/profile.d/locale.sh
+
+# width:
+calc_columns () {
+	STAT_COL=80
+	if [[ ! -t 1 ]]; then
+		USECOLOR=""
+	elif [[ -t 0 ]]; then
+		# stty will fail when stdin isn't a terminal
+		STAT_COL=$(stty size)
+		# stty gives "rows cols"; strip the rows number, we just want columns
+		STAT_COL=${STAT_COL##* }
+	elif tput cols &>/dev/null; then
+		# is /usr/share/terminfo already mounted, and TERM recognized?
+		STAT_COL=$(tput cols)
+	fi
+	if (( STAT_COL == 0 )); then
+		# if output was 0 (serial console), set default width to 80
+		STAT_COL=80
+		USECOLOR=""
+	fi
+
+	# we use 13 characters for our own stuff
+	STAT_COL=$(( STAT_COL - 13 ))
+
+	if [[ -t 1 ]]; then
+		SAVE_POSITION="\e[s"
+		RESTORE_POSITION="\e[u"
+		DEL_TEXT="\e[$(( STAT_COL + 4 ))G"
+	else
+		SAVE_POSITION=""
+		RESTORE_POSITION=""
+		DEL_TEXT=""
+	fi
+}
+
+calc_columns
+
+# disable colors on broken terminals
+TERM_COLORS=$(tput colors 2>/dev/null)
+if (( $? != 3 )); then
+	case $TERM_COLORS in
+		*[!0-9]*) USECOLOR="";;
+		[0-7])    USECOLOR="";;
+		'')       USECOLOR="";;
+	esac
+fi
+unset TERM_COLORS
+
+unquote() {
+	local -r quotes=$'[\'"]'
+
+	if [[ ${1:0:1} = $quotes && ${1:(-1)} = "${1:0:1}" ]]; then
+		printf '%s' "${1:1:(-1)}"
+	else
+		printf '%s' "$1"
+	fi
+}
+
+# functions:
+
+deltext() {
+	printf "${DEL_TEXT}"
+}
+
+printhl() {
+	printf "${C_OTHER}${PREFIX_HL} ${C_H1}${1}${C_CLEAR} \n"
+}
+
+printsep() {
+	printf "\n${C_SEPARATOR}   ------------------------------\n"
+}
+
+stat_busy() {
+	printf "${C_OTHER}${PREFIX_REG} ${C_MAIN}${1}${C_CLEAR} "
+	printf "${SAVE_POSITION}"
+	deltext
+	printf "   ${C_OTHER}[${C_BUSY}BUSY${C_OTHER}]${C_CLEAR} "
+}
+
+stat_done() {
+	deltext
+	printf "   ${C_OTHER}[${C_DONE}DONE${C_OTHER}]${C_CLEAR} \n"
+}
+
+stat_fail() {
+	deltext
+	printf "   ${C_OTHER}[${C_FAIL}FAIL${C_OTHER}]${C_CLEAR} \n"
+}
+
+status() {
+	local quiet
+	case $1 in
+		-q)
+			quiet=1
+			;;&
+		-v)
+			# NOOP: supported for backwards compat
+			shift
+			;;
+	esac
+	stat_busy "$1"
+	shift
+	if (( quiet )); then
+		"$@" &>/dev/null
+	else
+		"$@"
+	fi
+	local ret=$?
+	(( ret == 0 )) && stat_done || stat_fail
+	return $ret
+}
+
+#  usage : in_array( $needle, $haystack )
+# return : 0 - found
+#          1 - not found
+in_array() {
+	local needle=$1; shift
+	local item
+	for item; do
+		[[ $item = "${needle}" ]] && return 0
+	done
+	return 1 # Not Found
+}
+
+kill_all() {
+    stat_busy "Sending TERM signal to processes"
+    pkill --inverse -s0,1 -TERM
+    if (( $? == 0 )); then
+        stat_done
+    else
+        stat_fail
+        sleep 1
+        status "Sending KILL signal to processes" pkill --inverse -s0,1 -KILL
+    fi
+}
+
+print_welcome() {
+	# see os-release(5)
+	. /etc/os-release
+
+	echo " "
+	printhl "${PRETTY_NAME}\n"
+	printhl "${C_H2}${HOME_URL}"
+	printsep
+}
+
+load_modules() {
+	local rc=0
+
+	/usr/bin/modules-load
+	(( rc+=$? ))
+
+	return $rc
+}
+
+# Start/trigger udev, load MODULES, and settle udev
+udevd_modprobe() {
+	# $1 = where we are being called from.
+	# This is used to determine which hooks to run.
+	status "Starting udev daemon" udevd --daemon
+
+	run_hook "$1_udevlaunched"
+
+	stat_busy "Triggering udev uevents"
+		udevadm trigger --action=add --type=subsystems
+		udevadm trigger --action=add --type=devices
+	stat_done
+
+	# Load modules from the MODULES array and modules-load.d
+	status "Loading user-specified modules" load_modules
+
+	status "Waiting for udev uevents to be processed" \
+		udevadm settle
+
+	run_hook "$1_udevsettled"
+
+	# in case loading a module changed the display mode
+	calc_columns
+}
+
+activate_vgs() {
+	[[ $USELVM = [yY][eE][sS] && -x $(type -P lvm) && -d /sys/block ]] || return 0
+	stat_busy "Activating LVM2 groups"
+		vgchange --sysinit -a y >/dev/null
+	(( $? == 0 )) && stat_done || stat_fail
+}
+
+do_unlock_legacy() {
+	# $1 = requested name
+	# $2 = source device
+	# $3 = password
+	# $4 = options
+	local open=create a=$1 b=$2 failed=0
+	# Ordering of options is different if you are using LUKS vs. not.
+	# Use ugly swizzling to deal with it.
+	# isLuks only gives an exit code but no output to stdout or stderr.
+	if cryptsetup isLuks "$2" 2>/dev/null; then
+		open=luksOpen
+		a=$2
+		b=$1
+	fi
+	case $3 in
+		SWAP)
+			local _overwriteokay=0
+			if [[ -b $2 && -r $2 ]]; then
+				# This is DANGEROUS! If there is any known file system,
+				# partition table, RAID, or LVM volume on the device,
+				# we don't overwrite it.
+				#
+				# 'blkid' returns 2 if no valid signature has been found.
+				# Only in this case should we allow overwriting the device.
+				#
+				# This sanity check _should_ be sufficient, but it might not.
+				# This may cause data loss if it is not used carefully.
+				blkid -p "$2" &>/dev/null
+				(( $? == 2 )) && _overwriteokay=1
+			fi
+			if (( _overwriteokay == 0 )); then
+				false
+			elif cryptsetup -d /dev/urandom $4 $open "$a" "$b" >/dev/null; then
+				printf "creating swapspace..\n"
+				mkswap -f -L $1 /dev/mapper/$1 >/dev/null
+			fi;;
+		ASK)
+			printf "\nOpening '$1' volume:\n"
+			cryptsetup $4 $open "$a" "$b" < /dev/console;;
+		/dev*)
+			local ckdev=${3%%:*}
+			local cka=${3#*:}
+			local ckb=${cka#*:}
+			local cka=${cka%:*}
+			local ckfile=/dev/ckfile
+			local ckdir=/dev/ckdir
+			case ${cka} in
+				*[!0-9]*)
+					# Use a file on the device
+					# cka is not numeric: cka=filesystem, ckb=path
+					mkdir ${ckdir}
+					mount -r -t ${cka} ${ckdev} ${ckdir}
+					dd if=${ckdir}/${ckb} of=${ckfile} >/dev/null 2>&1
+					umount ${ckdir}
+					rmdir ${ckdir};;
+				*)
+					# Read raw data from the block device
+					# cka is numeric: cka=offset, ckb=length
+					dd if=${ckdev} of=${ckfile} bs=1 skip=${cka} count=${ckb} >/dev/null 2>&1;;
+			esac
+			cryptsetup -d ${ckfile} $4 $open "$a" "$b" >/dev/null
+			dd if=/dev/urandom of=${ckfile} bs=1 count=$(stat -c %s ${ckfile}) conv=notrunc >/dev/null 2>&1
+			rm ${ckfile};;
+		/*)
+			cryptsetup -d "$3" $4 $open "$a" "$b" >/dev/null;;
+		*)
+			echo "$3" | cryptsetup $4 $open "$a" "$b" >/dev/null;;
+	esac
+	return $?
+}
+
+do_unlock() {
+	local name=$1 device=$2 password=$3 options=$4
+
+	printf "${C_MAIN}Unlocking $1${C_CLEAR}\n"
+
+	if [[ ${options:0:2} =~ -. ]]; then
+		do_unlock_legacy "$name" "$device" "$password" "$options"
+		return $?
+	fi
+
+	case $password in
+		ASK|SWAP)
+			do_unlock_legacy "$name" "$device" "$password" "$options"
+			;;
+		*)
+			do_unlock_legacy "$name" "$device" "$password" "$options"
+			;;
+	esac
+	failed=$?
+	if (( $failed )); then
+		printf "${C_FAIL}Unlocking of $1 failed.${C_CLEAR}\n"
+	fi
+	return $?
+}
+
+deactivate_crypt() {
+	if [[ -x /usr/bin/dmsetup ]]; then
+		for v in $(dmsetup ls --target crypt --exec "dmsetup info -c --noheadings -o open,name"); do
+			[[ ${v%%:*} == "0" ]] && cryptsetup close ${v##*:}
+		done
+	fi
+}
+
+set_timezone() {
+	local tz=$1 zonefile=/usr/share/zoneinfo/$1
+
+	[[ $tz ]] || return 1
+
+	if [[ ! -e $zonefile ]]; then
+		printf "error: \`%s' is not a valid time zone\n" "$tz"
+		return 1
+	fi
+
+	if [[ -L /etc/localtime && /etc/localtime -ef $zonefile ]]; then
+		return 0
+	else
+		ln -sf "/usr/share/zoneinfo/$tz" /etc/localtime
+	fi
+}
+
+# Filesystem functions
+# These can be overridden/reused for customizations like shutdown/loop-fsck.
+NETFS="nfs,nfs4,smbfs,cifs,codafs,ncpfs,shfs,fuse,fuseblk,glusterfs,davfs,fuse.glusterfs"
+
+# Check local filesystems
+fsck_all() {
+	if [[ -f /forcefsck ]] || in_array forcefsck $(< /proc/cmdline); then
+		FORCEFSCK="-f"
+	elif [[ -f /fastboot ]] || in_array fastboot $(< /proc/cmdline); then
+		return 0
+	elif [[ -e /run/initramfs/root-fsck ]]; then
+		IGNORE_MOUNTED="-M"
+	fi
+
+	fsck -A -T -C${FSCK_FD} -a -t no${NETFS//,/,no},noopts=_netdev ${IGNORE_MOUNTED} -- ${FORCEFSCK}
+}
+
+# Single-user login and/or automatic reboot after fsck (if needed)
+fsck_reboot() {
+	# $1 = exit code returned by fsck
+	# Ignore conditions 'FS errors corrected' and 'Cancelled by the user'
+	(( ($1 | 33) == 33 )) && return 0
+	if (( $1 & 2 )); then
+		echo
+		echo "********************** REBOOT REQUIRED *********************"
+		echo "*                                                          *"
+		echo "* The system will be rebooted automatically in 15 seconds. *"
+		echo "*                                                          *"
+		echo "************************************************************"
+		echo
+		sleep 15
+	else
+		echo
+		echo "*****************  FILESYSTEM CHECK FAILED  ****************"
+		echo "*                                                          *"
+		echo "*  Please repair manually and reboot. Note that the root   *"
+		echo "*  file system is currently mounted read-only. To remount  *"
+		echo "*  it read-write, type: mount -o remount,rw /              *"
+		echo "*  When you exit the maintenance shell, the system will    *"
+		echo "*  reboot automatically.                                   *"
+		echo "*                                                          *"
+		echo "************************************************************"
+		echo
+		sulogin -p
+	fi
+	echo "Automatic reboot in progress..."
+	umount -a
+	mount -o remount,ro /
+	reboot -f
+	exit 0
+}
+
+mount_all() {
+	mount -a -t "no${NETFS//,/,no}" -O no_netdev
+}
+
+remove_leftover() {
+	status 'Removing leftover files' tmpfiles --create --remove --clean
+}
+
+bootlogd_stop() {
+	[[ -f /run/bootlogd.pid ]] || return 0
+	touch /var/log/boot
+	kill $(< /run/bootlogd.pid)
+	rm -f /run/bootlogd.pid
+}
+
+bootlogd_start(){
+    [[ ! -f /var/log/boot ]] && touch /var/log/boot
+    bootlogd -p /run/bootlogd.pid
+}
+
+console_setup(){
+    TTYS=${TTYS:-6}
+    if [ -n "$FONT" ]; then
+        _index=0
+        while [ ${_index} -le $TTYS ]; do
+            setfont ${FONT_MAP:+-m $FONT_MAP} ${FONT_UNIMAP:+-u $FONT_UNIMAP} \
+                    $FONT -C "/dev/tty${_index}"
+            _index=$((_index + 1))
+        done
+    fi
+    if [ -n "$KEYMAP" ]; then
+        loadkeys -q -u ${KEYMAP}
+    fi
+}
+
+init_random_seed(){
+    cp /var/lib/random-seed /dev/urandom >/dev/null 2>&1 || true
+    ( umask 077; bytes=$(cat /proc/sys/kernel/random/poolsize) || bytes=512; dd if=/dev/urandom of=/var/lib/random-seed count=1 bs=$bytes >/dev/null 2>&1 )
+}
+
+save_random_seed(){
+    ( umask 077; bytes=$(cat /proc/sys/kernel/random/poolsize) || bytes=512; dd if=/dev/urandom of=/var/lib/random-seed count=1 bs=$bytes >/dev/null 2>&1 )
+}
+
+mk_kmod_static_nodes(){
+    [[ -d /run/tmpfiles.d ]] || mkdir /run/tmpfiles.d
+    kmod static-nodes --format=tmpfiles --output=/run/tmpfiles.d/kmod.conf
+}
+
+mk_tmpfiles_dev(){
+    if [ -x /usr/bin/tmpfiles ]; then
+        tmpfiles --prefix=/dev --create --boot
+    fi
+}
+
+mk_tmpfiles_setup(){
+    if [ -x /usr/bin/tmpfiles ]; then
+        tmpfiles --exclude-prefix=/dev --create --remove --boot
+    fi
+}
+
+mk_sysusers(){
+    if [ -x /usr/bin/sysusers ]; then
+        sysusers
+    fi
+}
+
+cleanup_1(){
+    install -m0664 -o root -g utmp /dev/null /run/utmp
+    if [ ! -e /var/log/wtmp ]; then
+        install -m0664 -o root -g utmp /dev/null /var/log/wtmp
+    fi
+    if [ ! -e /var/log/btmp ]; then
+        install -m0600 -o root -g utmp /dev/null /var/log/btmp
+    fi
+    rm -rf /tmp
+    install -dm1777 /tmp /tmp/.X11-unix /tmp/.ICE-unix
+    rm -f /etc/nologin #/forcefsck /forcequotacheck /fastboot
+}
+
+###############################
+# Custom hooks in initscripts #
+###############################
+# Hooks can be used to include custom code in various places in the rc.* scripts
+#
+# Define a hook function in a functions.d file using:
+#  function_name() {
+#    ...
+#  }
+#  add_hook hook_name function_name
+# It is allowed to register several hook functions for the same hook
+# Is is also allowed to register the same hook function for several hooks
+#
+# Currently, the following hooks exist:
+# sysinit_start: at the beginning of rc.sysinit
+# shutdown_start: at the beginning of rc.shutdown
+# sysinit_end: at the end of rc.sysinit
+# sysinit_udevlaunched: after udev has been launched in rc.sysinit
+# sysinit_udevsettled: after uevents have settled in rc.sysinit
+# sysinit_premount: before local filesystems are mounted, but after root is mounted read-write in rc.sysinit
+# sysinit_postmount: after local filesystems are mounted
+# shutdown_prekillall: before all processes are being killed in rc.shutdown
+# shutdown_postkillall: after all processes have been killed in rc.shutdown
+# shutdown_preumount: after last filesystem write, but before filesystems are unmounted
+# shutdown_postumount: after filesystems are unmounted
+# shutdown_poweroff: directly before powering off in rc.shutdown
+#
+# Declare add_hook and run_hook as read-only to prevent overwriting them.
+# Too bad we cannot do the same thing with hook_funcs
+
+if (( RC_FUNCTIONS_HOOK_FUNCS_DEFINED != 1 )); then
+	declare -A hook_funcs
+
+	add_hook() {
+		[[ $1 && $2 ]] || return 1
+		hook_funcs[$1]+=" $2"
+	}
+
+	run_hook() {
+		[[ $1 ]] || return 1
+		local func
+		for func in ${hook_funcs["$1"]}; do
+			"${func}"
+		done
+	}
+
+	declare -fr add_hook run_hook
+	declare -r RC_FUNCTIONS_HOOK_FUNCS_DEFINED=1
+fi
+
+# set colors
+if [[ $USECOLOR != [nN][oO] ]]; then
+	if tput setaf 0 &>/dev/null; then
+		C_CLEAR=$(tput sgr0)                      # clear text
+		C_MAIN=${C_CLEAR}$(tput bold)        # main text
+		C_OTHER=${C_MAIN}$(tput setaf 4)     # prefix & brackets
+		C_SEPARATOR=${C_MAIN}$(tput setaf 0) # separator
+		C_BUSY=${C_CLEAR}$(tput setaf 6)     # busy
+		C_FAIL=${C_MAIN}$(tput setaf 1)      # failed
+		C_DONE=${C_MAIN}                          # completed
+		C_BKGD=${C_MAIN}$(tput setaf 5)      # backgrounded
+		C_H1=${C_MAIN}                            # highlight text 1
+		C_H2=${C_MAIN}$(tput setaf 6)        # highlight text 2
+	else
+		C_CLEAR="\e[m"          # clear text
+		C_MAIN="\e[;1m"         # main text
+		C_OTHER="\e[1;34m"      # prefix & brackets
+		C_SEPARATOR="\e[1;30m"  # separator
+		C_BUSY="\e[;36m"        # busy
+		C_FAIL="\e[1;31m"       # failed
+		C_DONE=${C_MAIN}        # completed
+		C_BKGD="\e[1;35m"       # backgrounded
+		C_H1=${C_MAIN}          # highlight text 1
+		C_H2="\e[1;36m"         # highlight text 2
+	fi
+fi
+
+# prefixes:
+
+PREFIX_REG="::"
+PREFIX_HL=" >"
+
+# Source additional functions at the end to allow overrides
+# for f in @RCDIR@/functions.d/*; do
+# 	[[ -e $f ]] && . "$f"
+# done
+
