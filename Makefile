@@ -30,6 +30,7 @@ CHMODAW = chmod a-w
 CHMODX = chmod +x
 
 HASRC = yes
+HASSYSV = no
 
 EDIT = sed \
 	-e "s|@RUNITDIR[@]|$(RUNITDIR)|g" \
@@ -88,9 +89,9 @@ install-rc:
 	install -d $(DESTDIR)$(RCDIR)/sysinit.d
 	install -d $(DESTDIR)$(RCDIR)/shutdown.d
 	install -m755 $(RC) $(DESTDIR)$(RCDIR)
-	install -m644 sysinit.d/* $(DESTDIR)$(RCDIR)/sysinit.d
-	install -m644 shutdown.d/* $(DESTDIR)$(RCDIR)/shutdown.d
-	install -m644 crypt.awk $(DESTDIR)$(RCDIR)
+	install -m644 rc/sysinit.d/* $(DESTDIR)$(RCDIR)/sysinit.d
+	install -m644 rc/shutdown.d/* $(DESTDIR)$(RCDIR)/shutdown.d
+	install -m644 rc/crypt.awk $(DESTDIR)$(RCDIR)
 
 	install -d $(DESTDIR)$(RCBINDIR)
 	install -m644 $(RCBIN) $(DESTDIR)$(RCBINDIR)
@@ -106,14 +107,17 @@ install_sysv:
 	$(LN) halt $(DESTDIR)$(BINDIR)/poweroff
 	$(LN) halt $(DESTDIR)$(BINDIR)/reboot
 	install -d $(DESTDIR)$(MANDIR)/man8
-	install -m644 shutdown.8 $(DESTDIR)$(MANDIR)/man8/shutdown.8
-	install -m644 halt.8 $(DESTDIR)$(MANDIR)/man8/halt.8
+	install -m644 rc/shutdown.8 $(DESTDIR)$(MANDIR)/man8/shutdown.8
+	install -m644 rc/halt.8 $(DESTDIR)$(MANDIR)/man8/halt.8
 	$(LN) halt.8 $(DESTDIR)$(MANDIR)/man8/poweroff.8
 	$(LN) halt.8 $(DESTDIR)$(MANDIR)/man8/reboot.8
 
 install: install-runit
 ifeq ($(HASRC),yes)
 install: install-rc
+ifeq ($(HASSYSV),yes)
+install: install_sysv
+endif
 endif
 
 clean-runit:
