@@ -373,20 +373,15 @@ mount_all() {
 	mount -a -t "no${NETFS//,/,no}" -O no_netdev
 }
 
-remove_leftover() {
-	status 'Removing leftover files' tmpfiles --create --remove --clean
-}
-
 bootlogd_stop() {
 	[[ -f /run/bootlogd.pid ]] || return 0
-	touch /var/log/boot
+	touch /var/log/boot.log
 	kill $(< /run/bootlogd.pid)
 	rm -f /run/bootlogd.pid
 }
 
 bootlogd_start(){
-#     [[ ! -f /var/log/boot ]] && touch /var/log/boot
-    bootlogd -p /run/bootlogd.pid
+    bootlogd -p /run/bootlogd.pid -l /var/log/boot.log
 }
 
 console_setup(){
@@ -430,6 +425,10 @@ mk_tmpfiles_setup(){
     fi
 }
 
+remove_leftover() {
+	status 'Removing leftover files' tmpfiles --create --remove --clean
+}
+
 mk_sysusers(){
     if [ -x /usr/bin/sysusers ]; then
         sysusers
@@ -444,8 +443,13 @@ cleanup_sysinit(){
     if [ ! -e /var/log/btmp ]; then
         install -m0600 -o root -g utmp /dev/null /var/log/btmp
     fi
-    rm -rf /tmp
-    install -dm1777 /tmp /tmp/.X11-unix /tmp/.ICE-unix
+
+    # Remove leftover files
+    remove_leftover
+
+    # this is not good, why remove tmp? consider /tmp is mounted tmpfs.
+#     rm -rf /tmp
+#     install -dm1777 /tmp /tmp/.X11-unix /tmp/.ICE-unix
     rm -f /etc/nologin #/forcefsck /forcequotacheck /fastboot
 }
 
