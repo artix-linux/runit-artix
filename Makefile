@@ -9,7 +9,6 @@ SVDIR = $(RUNITDIR)/sv
 RUNSVDIR = $(RUNITDIR)/runsvdir
 SERVICEDIR = /etc/service
 RUNDIR = /run/runit
-RCBINDIR = $(PREFIX)/lib/rc/bin
 RCDIR = $(SYSCONFDIR)/rc
 
 TMPFILES = tmpfile.conf
@@ -18,7 +17,6 @@ BIN = zzz pause modules-load
 
 STAGES = 1 2 3 ctrlaltdel
 
-RCBIN = rc/halt rc/shutdown
 RC = rc/rc.local rc/rc.shutdown rc/functions rc/rc.conf
 
 LN = ln -sf
@@ -56,8 +54,7 @@ endif
 all-runit: $(STAGES)
 		$(CC) $(CFLAGS) pause.c -o pause $(LDFLAGS)
 
-all-rc: $(RC) rc/shutdown
-	$(CC) $(CFLAGS) rc/halt.c -o rc/halt $(LDFLAGS)
+all-rc: $(RC)
 
 install-runit:
 	install -d $(DESTDIR)$(RUNITDIR)
@@ -93,25 +90,6 @@ install-rc:
 	install -m644 rc/shutdown.d/* $(DESTDIR)$(RCDIR)/shutdown.d
 	install -m644 rc/crypt.awk $(DESTDIR)$(RCDIR)
 
-	install -d $(DESTDIR)$(RCBINDIR)
-	install -m644 $(RCBIN) $(DESTDIR)$(RCBINDIR)
-
-	$(LN) halt $(DESTDIR)$(RCBINDIR)/poweroff
-	$(LN) halt $(DESTDIR)$(RCBINDIR)/reboot
-
-install_sysv:
-	install -d $(DESTDIR)$(BINDIR)
-	$(LN) runit-init $(DESTDIR)$(BINDIR)/init
-	$(LN) $(RCBINDIR)/halt $(DESTDIR)$(BINDIR)/halt
-	$(LN) $(RCBINDIR)/shutdown $(DESTDIR)$(BINDIR)/shutdown
-	$(LN) halt $(DESTDIR)$(BINDIR)/poweroff
-	$(LN) halt $(DESTDIR)$(BINDIR)/reboot
-	install -d $(DESTDIR)$(MANDIR)/man8
-	install -m644 rc/shutdown.8 $(DESTDIR)$(MANDIR)/man8/shutdown.8
-	install -m644 rc/halt.8 $(DESTDIR)$(MANDIR)/man8/halt.8
-	$(LN) halt.8 $(DESTDIR)$(MANDIR)/man8/poweroff.8
-	$(LN) halt.8 $(DESTDIR)$(MANDIR)/man8/reboot.8
-
 install: install-runit
 ifeq ($(HASRC),yes)
 install: install-rc
@@ -125,8 +103,7 @@ clean-runit:
 	-rm -f $(STAGES)
 
 clean-rc:
-	-rm -f rc/halt
-	-rm -f rc/shutdown $(RC)
+	-rm -f $(RC)
 
 clean: clean-runit
 ifeq ($(HASRC),yes)
