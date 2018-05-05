@@ -124,15 +124,9 @@ in_array() {
 }
 
 kill_all() {
-    stat_busy "Sending TERM signal to processes"
-    pkill --inverse -s0,1 -TERM
-    if (( $? == 0 )); then
-        stat_done
-    else
-        stat_fail
-        sleep 1
-        status "Sending KILL signal to processes" pkill --inverse -s0,1 -KILL
-    fi
+    status "Sending TERM signal to processes" pkill --inverse -s0,1 -TERM
+    sleep 1
+    status "Sending KILL signal to processes" pkill --inverse -s0,1 -KILL
 }
 
 print_welcome() {
