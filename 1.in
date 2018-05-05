@@ -14,8 +14,6 @@ for sysinit in @RCDIR@/sysinit.d/*; do
 	. $sysinit
 done
 
-cleanup_sysinit
-
 run_hook sysinit_end
 
 install -m100 /dev/null @RUNDIR@/stopit

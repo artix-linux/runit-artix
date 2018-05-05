@@ -58,8 +58,8 @@ all-rc: $(RC) $(STAGES)
 install-runit:
 	install -d $(DESTDIR)$(RUNITDIR)
 	install -d $(DESTDIR)$(RUNSVDIR)
-	mkdir -p $(DESTDIR)$(RUNSVDIR)/default
-	mkdir -p $(DESTDIR)$(SVDIR)/sulogin
+	install -d $(DESTDIR)$(RUNSVDIR)/default
+	install -d $(DESTDIR)$(SVDIR)/sulogin
 	$(LN) $(RUNSVDIR)/default $(DESTDIR)$(RUNSVDIR)/current
 	$(CP) sv/sulogin $(DESTDIR)$(SVDIR)/
 	$(CP) runsvdir/single $(DESTDIR)$(RUNSVDIR)/
