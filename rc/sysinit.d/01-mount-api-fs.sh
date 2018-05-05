@@ -14,3 +14,5 @@ mountpoint -q /sys/fs/cgroup/openrc || mkdir -p /sys/fs/cgroup/openrc && mount -
 awk '$4 == 1 { system("mountpoint -q /sys/fs/cgroup/" $1 " || { mkdir -p /sys/fs/cgroup/" $1 " && mount -t cgroup -o " $1 " cgroup /sys/fs/cgroup/" $1 " ;}" ) }' /proc/cgroups
 
 findmnt / --options ro &>/dev/null || status "Mounting root read-only" mount -o remount,ro /
+
+bootlogd_start

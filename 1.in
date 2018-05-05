@@ -8,9 +8,6 @@ PATH=/usr/bin:/usr/sbin
 # Prints distro name and URL
 print_welcome
 
-# log all console messages
-bootlogd_start
-
 run_hook sysinit_start
 
 for sysinit in @RCDIR@/sysinit.d/*; do
@@ -27,3 +24,5 @@ run_hook sysinit_end
 install -m100 /dev/null @RUNDIR@/stopit
 
 status "Initialization complete"
+
+bootlogd_stop
