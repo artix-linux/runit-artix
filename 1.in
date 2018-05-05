@@ -20,6 +20,8 @@ done
 # Remove leftover files
 # remove_leftover
 
+cleanup_sysinit
+
 run_hook sysinit_end
 
 install -m100 /dev/null @RUNDIR@/stopit
