@@ -57,15 +57,15 @@ all-rc: $(RC) $(STAGES)
 
 install-runit:
 	install -d $(DESTDIR)$(RUNITDIR)
+	install -d $(DESTDIR)$(RUNSVDIR)
+	mkdir -p $(DESTDIR)$(RUNSVDIR)/default
+	mkdir -p $(DESTDIR)$(SVDIR)/sulogin
+	$(LN) $(RUNSVDIR)/default $(DESTDIR)$(RUNSVDIR)/current
+	$(CP) sv/sulogin $(DESTDIR)$(SVDIR)/
+	$(CP) runsvdir/single $(DESTDIR)$(RUNSVDIR)/
 
 	$(LN) $(RUNDIR)/reboot $(DESTDIR)$(RUNITDIR)/
 	$(LN) $(RUNDIR)/stopit $(DESTDIR)$(RUNITDIR)/
-
-	install -d $(DESTDIR)$(SVDIR)
-	$(CP) sv/* $(DESTDIR)$(SVDIR)/
-
-	install -d $(DESTDIR)$(RUNSVDIR)
-	$(CP) runsvdir/* $(DESTDIR)$(RUNSVDIR)/
 
 	install -d $(DESTDIR)$(BINDIR)
 	install -m755 $(BIN) $(DESTDIR)$(BINDIR)
@@ -90,6 +90,15 @@ install-rc:
 	install -m644 rc/sysinit.d/* $(DESTDIR)$(RCDIR)/sysinit.d
 	install -m644 rc/shutdown.d/* $(DESTDIR)$(RCDIR)/shutdown.d
 	install -m644 rc/crypt.awk $(DESTDIR)$(RCDIR)
+	install -d $(DESTDIR)$(RUNITDIR)
+	install -m755 $(STAGES) $(DESTDIR)$(RUNITDIR)
+
+install-getty:
+	install -d $(DESTDIR)$(SVDIR)
+	$(CP) sv/agetty-* $(DESTDIR)$(SVDIR)/
+
+	install -d $(DESTDIR)$(RUNSVDIR)/default
+	$(CP) runsvdir/default $(DESTDIR)$(RUNSVDIR)/
 
 install: install-runit
 ifeq ($(HASRC),yes)
@@ -110,4 +119,4 @@ endif
 
 clean:
 
-.PHONY: all install clean install-runit install-rc clean-runit clean-rc all-runit all-rc install_sysv
+.PHONY: all install clean install-runit install-rc install-getty clean-runit clean-rc all-runit all-rc
