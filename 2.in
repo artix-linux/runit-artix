@@ -2,6 +2,8 @@
 
 PATH=/usr/bin:/usr/sbin
 
+[ -x @RCDIR@/rc.local ] && . @RCDIR@/rc.local
+
 runlevel=default
 for arg in $(cat /proc/cmdline); do
     if [ -d @RUNITDIR@/runsvdir/"$arg" ]; then

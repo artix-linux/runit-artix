@@ -28,7 +28,6 @@ CHMODAW = chmod a-w
 CHMODX = chmod +x
 
 HASRC = yes
-HASSYSV = no
 
 EDIT = sed \
 	-e "s|@RUNITDIR[@]|$(RUNITDIR)|g" \
@@ -51,14 +50,13 @@ ifeq ($(HASRC),yes)
 all: all-rc
 endif
 
-all-runit: $(STAGES)
+all-runit:
 		$(CC) $(CFLAGS) pause.c -o pause $(LDFLAGS)
 
-all-rc: $(RC)
+all-rc: $(RC) $(STAGES)
 
 install-runit:
 	install -d $(DESTDIR)$(RUNITDIR)
-	install -m755 $(STAGES) $(DESTDIR)$(RUNITDIR)
 
 	$(LN) $(RUNDIR)/reboot $(DESTDIR)$(RUNITDIR)/
 	$(LN) $(RUNDIR)/stopit $(DESTDIR)$(RUNITDIR)/
@@ -82,6 +80,9 @@ install-runit:
 	install -m644 modules-load.8 $(DESTDIR)$(MANDIR)/man8
 
 install-rc:
+	install -d $(DESTDIR)$(RUNITDIR)
+	install -m755 $(STAGES) $(DESTDIR)$(RUNITDIR)
+
 	install -d $(DESTDIR)$(RCDIR)
 	install -d $(DESTDIR)$(RCDIR)/sysinit.d
 	install -d $(DESTDIR)$(RCDIR)/shutdown.d
@@ -93,17 +94,14 @@ install-rc:
 install: install-runit
 ifeq ($(HASRC),yes)
 install: install-rc
-ifeq ($(HASSYSV),yes)
-install: install_sysv
-endif
 endif
 
 clean-runit:
 	-rm -f pause
-	-rm -f $(STAGES)
 
 clean-rc:
 	-rm -f $(RC)
+	-rm -f $(STAGES)
 
 clean: clean-runit
 ifeq ($(HASRC),yes)
