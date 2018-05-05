@@ -8,7 +8,7 @@ distribution.
 - GNU coreutils
 - GNU bash
 - A POSIX awk
-- procps-ng (needs pkill -s0,1)
+- procps-ng
 - runit
 - opentmpfiles
 - opensysusers
