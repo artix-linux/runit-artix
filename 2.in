@@ -2,16 +2,10 @@
 
 PATH=/usr/bin:/usr/sbin
 
-. @RCDIR@/functions
-
-bootlogd_stop
-
-status "Running stage 2"
-
 runlevel=default
 for arg in $(cat /proc/cmdline); do
     if [ -d @RUNITDIR@/runsvdir/"$arg" ]; then
-        status "Runlevel detected: '$arg' (via kernel cmdline)"
+        echo "Runlevel detected: '$arg' (via kernel cmdline)"
         runlevel="$arg"
     fi
 done
