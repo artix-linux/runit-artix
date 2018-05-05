@@ -14,9 +14,6 @@ for sysinit in @RCDIR@/sysinit.d/*; do
 	. $sysinit
 done
 
-# Remove leftover files
-# remove_leftover
-
 cleanup_sysinit
 
 run_hook sysinit_end
