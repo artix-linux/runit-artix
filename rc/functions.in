@@ -385,7 +385,7 @@ bootlogd_stop() {
 }
 
 bootlogd_start(){
-    [[ ! -f /var/log/boot ]] && touch /var/log/boot
+#     [[ ! -f /var/log/boot ]] && touch /var/log/boot
     bootlogd -p /run/bootlogd.pid
 }
 
