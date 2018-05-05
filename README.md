@@ -3,14 +3,10 @@
 This repository contains the runit init scripts for the Artix Linux
 distribution.
 
-This work is based on Void Linux's
-[void-runit](https://github.com/voidlinux/void-runit). Patches to Void
-Linux's repo will also be applied here.
-
 ## Dependencies
 
 - GNU coreutils
-- A POSIX shell
+- GNU bash
 - A POSIX awk
 - procps-ng (needs pkill -s0,1)
 - runit
@@ -43,9 +39,7 @@ Feel free to send patches and contribute with improvements!
 
 ## Copyright
 
-runit-artix is in the public domain.
+Some codes are based on void-runit, which is licensed under CC0-1.0
 
-To the extent possible under law, the creator of this work has waived
-all copyright and related or neighboring rights to this work.
-
-http://creativecommons.org/publicdomain/zero/1.0/
+The rest of runit-artix is licensed under the terms as described in the
+COPYING file.
