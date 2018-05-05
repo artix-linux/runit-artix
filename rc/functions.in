@@ -450,7 +450,7 @@ cleanup_sysinit(){
     # this is not good, why remove tmp? consider /tmp is mounted tmpfs.
 #     rm -rf /tmp
 #     install -dm1777 /tmp /tmp/.X11-unix /tmp/.ICE-unix
-    rm -f /etc/nologin #/forcefsck /forcequotacheck /fastboot
+    rm -f /etc/nologin /forcefsck /forcequotacheck /fastboot
 }
 
 ###############################
