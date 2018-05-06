@@ -2,12 +2,11 @@
 
 # Storage
 #
+# Enable dmraid support (yes/no)
 # USEDMRAID="no"
+
+# Enable LVM2 support (yes/no)
 # USELVM="no"
 
-# Network
-#
-# interface=
-# address=
-# netmask=
-# gateway=
+# Enable btrfs support (yes/no)
+# USEBTRFS="no"
