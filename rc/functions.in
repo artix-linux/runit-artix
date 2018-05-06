@@ -301,6 +301,21 @@ set_timezone() {
 	fi
 }
 
+run_binfmt() {
+	mountpoint -q /proc/sys/fs/binfmt_misc || \
+		mount -t binfmt_misc binfmt /proc/sys/fs/binfmt_misc
+
+	for path in /usr/lib/binfmt.d /etc/binfmt.d /run/binfmt.d; do
+		[[ ! -d $path ]] && continue;
+		for file in $(ls -1 $path); do
+			grep "^:" $file | \
+				while read -r line; do
+					printf "%s" "$line" > /proc/sys/fs/binfmt_misc/register
+				done
+		done
+	done
+}
+
 # Filesystem functions
 # These can be overridden/reused for customizations like shutdown/loop-fsck.
 NETFS="nfs,nfs4,smbfs,cifs,codafs,ncpfs,shfs,fuse,fuseblk,glusterfs,davfs,fuse.glusterfs"
