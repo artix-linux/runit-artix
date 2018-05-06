@@ -9,7 +9,6 @@ export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 # unset TZ
 
 . /etc/profile.d/locale.sh
-. /etc/vconsole.conf
 
 # width:
 calc_columns () {
@@ -370,6 +369,7 @@ bootlogd_start(){
 }
 
 console_setup(){
+    [ -r /etc/vconsole.conf ] && . /etc/vconsole.conf
     TTYS=${TTYS:-6}
     if [ -n "$FONT" ]; then
         _index=0
