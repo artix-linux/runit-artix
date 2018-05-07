@@ -305,9 +305,10 @@ run_binfmt() {
 	mountpoint -q /proc/sys/fs/binfmt_misc || \
 		mount -t binfmt_misc binfmt /proc/sys/fs/binfmt_misc
 
-	for file in /usr/lib/binfmt.d/* /etc/binfmt.d/* /run/binfmt.d/*; do
-		[[ -r $file ]] && \
-		grep "^:" "$file" | \
+	for path in /usr/lib/binfmt.d /etc/binfmt.d /run/binfmt.d; do
+		[[ ! -d $path ]] && continue
+		[[ -z "$(ls $path)" ]] && continue
+		grep "^:" $path/* | \
 			while read -r line; do
 				printf "%s" "$line" > /proc/sys/fs/binfmt_misc/register
 			done
