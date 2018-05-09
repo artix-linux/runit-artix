@@ -24,7 +24,7 @@ BIN = zzz pause modules-load
 
 STAGES = 1 2 3 ctrlaltdel
 
-RC = rc/rc.local rc/rc.shutdown.local rc/rc.conf
+RC = rc/rc.local rc/rc.local.shutdown rc/rc.conf
 RCFUNC = rc/functions
 
 LN = ln -sf
@@ -108,7 +108,7 @@ install-rc:
 	$(LN) $(LIBDIR)/rc/functions $(DESTDIR)$(RCDIR)/functions
 
 	install -d $(DESTDIR)$(RCDIR)/sv.d
-	install -m644 $(SVD) $(DESTDIR)$(RCDIR)/sv.d
+	install -m755 $(SVD) $(DESTDIR)$(RCDIR)/sv.d
 
 
 install-getty:

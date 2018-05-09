@@ -65,65 +65,6 @@ if (( $? != 3 )); then
 fi
 unset TERM_COLORS
 
-unquote() {
-	local -r quotes=$'[\'"]'
-
-	if [[ ${1:0:1} = $quotes && ${1:(-1)} = "${1:0:1}" ]]; then
-		printf '%s' "${1:1:(-1)}"
-	else
-		printf '%s' "$1"
-	fi
-}
-
-parse_envfile() {
-	local file=$1 validkeys=("${@:2}") ret=0 lineno=0 key= val=
-	local -r comments=$'[;#]*'
-
-	if [[ -z $file ]]; then
-		printf "error: no environment file specified\n"
-		return 1
-	fi
-
-	if [[ ! -f $file ]]; then
-		printf "error: cannot parse \`%s': No such file or directory\n" "$file"
-		return 1
-	fi
-
-	if [[ ! -r $file ]]; then
-		printf "error: cannot read \`%s': Permission denied\n" "$file"
-		return 1
-	fi
-
-	while IFS='=' read -r key val; do
-		(( ++lineno ))
-
-		# trim whitespace, avoiding usage of a tempfile
-		key=$(echo "$key" | { read -r key; echo "$key"; })
-
-		# key must exist and line must not be a comment
-		[[ -z $key || ${key:0:1} = $comments ]] && continue
-
-		# trim whitespace, strip matching quotes
-		val=$(echo "$val" | { read -r val; unquote "$val"; })
-
-		if [[ -z $val ]]; then
-			printf "error: found key \`%s' without value on line %s of %s\n" \
-					"$key" "$lineno" "$file"
-			(( ++ret ))
-			continue
-		fi
-
-		# ignore invalid keys if we have a list of valid ones
-		if (( ${#validkeys[*]} )) && ! in_array "$key" "${validkeys[@]}"; then
-			continue
-		fi
-
-		export "$key=$val" || (( ++ret ))
-	done <"$file"
-
-	return $ret
-}
-
 # functions:
 
 deltext() {
