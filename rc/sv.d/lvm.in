@@ -1,0 +1,26 @@
+#!/bin/bash
+
+. @RCDIR@/rc.conf
+. @RCDIR@/functions
+
+case "$1" in
+    start)
+        activate_vgs
+        add_daemon lvm
+        stat_done
+        ;;
+    stop)
+        stat_busy "Deactivating LVM2 groups"
+        deactivate_vgs
+        rm_daemon lvm
+        stat_done
+        ;;
+    restart)
+        $0 stop
+        sleep 1
+        $0 start
+        ;;
+    *)
+        echo "usage: $0 {start|stop|restart}"
+        exit 1
+esac

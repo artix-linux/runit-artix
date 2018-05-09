@@ -1,0 +1,22 @@
+#!/bin/bash
+
+. @RCDIR@/rc.conf
+. @RCDIR@/functions
+
+case "$1" in
+    start)
+        stat_busy "Activating encrypted devices"
+        activate_crypt
+        add_daemon cryptsetup
+        stat_done
+        ;;
+    stop)
+        stat_busy "Deactivating encrypted devices"
+        deactivate_crypt
+        rm_daemon cryptsetup
+        stat_done
+        ;;
+    *)
+        echo "usage: $0 {start|stop|restart}"
+        exit 1
+esac

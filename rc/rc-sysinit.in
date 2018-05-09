@@ -16,13 +16,4 @@ run_hook sysinit_end
 
 [[ -x @RCDIR@/rc.local ]] && @RCDIR@/rc.local
 
-# Start daemons eventually in the modules sh
-# for daemon in "${DAEMONS[@]}"; do
-# 	case ${daemon:0:1} in
-# 		'!') continue;;     # Skip this daemon.
-# 		'@') start_daemon_bkgd "${daemon#@}";;
-# 		*)   start_daemon "$daemon";;
-# 	esac
-# done
-
 bootlogd_stop
