@@ -16,7 +16,7 @@ RCBIN = rc/rc-sv rc/rc-sysinit rc/rc-shutdown
 SYSINITD = $(wildcard rc/sysinit.d/*.sh)
 SHUTDOWND = $(wildcard rc/shutdown.d/*.sh)
 # SVD = $(wildcard rc/sv.d/*)
-SVD = rc/sv.d/hwclock rc/sv.d/netfs
+SVD = rc/sv.d/hwclock rc/sv.d/netfs rc/sv.d/lvm rc/sv.d/lvm-monitoring rc/sv.d/cryptsetup rc/sv.d/udev
 
 TMPFILES = tmpfile.conf
 

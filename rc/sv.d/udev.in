@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# sourcing our current rc.conf requires this to be a bash script
+. @RCDIR@/rc.conf
+. @RCDIR@/functions
+
+case "$1" in
+	start)
+		stat_busy "Starting udev"
+		udevd_modprobe sysinit
+		add_daemon udev
+		stat_done
+		;;
+	stop)
+		stat_busy "Shutting down udev"
+		udevadm control --exit
+		rm_daemon udev
+		stat_done
+		;;
+	restart)
+		$0 stop
+		sleep 1
+		$0 start
+		;;
+	*)
+		echo "usage: $0 {start|stop|restart}"
+		exit 1
+esac
+
