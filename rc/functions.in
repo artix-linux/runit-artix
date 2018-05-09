@@ -10,6 +10,14 @@ export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 . /etc/profile.d/locale.sh
 
+if [[ $1 == "start" ]]; then
+	if [[ $STARTING ]]; then
+		echo "A daemon is starting another daemon; this is unlikely to work as intended."
+	else
+		export STARTING=1
+	fi
+fi
+
 # width:
 calc_columns () {
 	STAT_COL=80
@@ -57,6 +65,65 @@ if (( $? != 3 )); then
 fi
 unset TERM_COLORS
 
+unquote() {
+	local -r quotes=$'[\'"]'
+
+	if [[ ${1:0:1} = $quotes && ${1:(-1)} = "${1:0:1}" ]]; then
+		printf '%s' "${1:1:(-1)}"
+	else
+		printf '%s' "$1"
+	fi
+}
+
+parse_envfile() {
+	local file=$1 validkeys=("${@:2}") ret=0 lineno=0 key= val=
+	local -r comments=$'[;#]*'
+
+	if [[ -z $file ]]; then
+		printf "error: no environment file specified\n"
+		return 1
+	fi
+
+	if [[ ! -f $file ]]; then
+		printf "error: cannot parse \`%s': No such file or directory\n" "$file"
+		return 1
+	fi
+
+	if [[ ! -r $file ]]; then
+		printf "error: cannot read \`%s': Permission denied\n" "$file"
+		return 1
+	fi
+
+	while IFS='=' read -r key val; do
+		(( ++lineno ))
+
+		# trim whitespace, avoiding usage of a tempfile
+		key=$(echo "$key" | { read -r key; echo "$key"; })
+
+		# key must exist and line must not be a comment
+		[[ -z $key || ${key:0:1} = $comments ]] && continue
+
+		# trim whitespace, strip matching quotes
+		val=$(echo "$val" | { read -r val; unquote "$val"; })
+
+		if [[ -z $val ]]; then
+			printf "error: found key \`%s' without value on line %s of %s\n" \
+					"$key" "$lineno" "$file"
+			(( ++ret ))
+			continue
+		fi
+
+		# ignore invalid keys if we have a list of valid ones
+		if (( ${#validkeys[*]} )) && ! in_array "$key" "${validkeys[@]}"; then
+			continue
+		fi
+
+		export "$key=$val" || (( ++ret ))
+	done <"$file"
+
+	return $ret
+}
+
 # functions:
 
 deltext() {
@@ -78,6 +145,18 @@ stat_busy() {
 	printf "   ${C_OTHER}[${C_BUSY}BUSY${C_OTHER}]${C_CLEAR} "
 }
 
+stat_bkgd() {
+	printf "${C_OTHER}${PREFIX_REG} ${C_MAIN}${1}${C_CLEAR} "
+	deltext
+	printf "   ${C_OTHER}[${C_BKGD}BKGD${C_OTHER}]${C_CLEAR} \n"
+}
+
+stat_append() {
+	printf "${RESTORE_POSITION}"
+	printf -- "${C_MAIN}${1}${C_CLEAR}"
+	printf "${SAVE_POSITION}"
+}
+
 stat_done() {
 	deltext
 	printf "   ${C_OTHER}[${C_DONE}DONE${C_OTHER}]${C_CLEAR} \n"
@@ -86,6 +165,11 @@ stat_done() {
 stat_fail() {
 	deltext
 	printf "   ${C_OTHER}[${C_FAIL}FAIL${C_OTHER}]${C_CLEAR} \n"
+}
+
+stat_die() {
+	stat_fail
+	exit ${1:-1}
 }
 
 status() {
@@ -121,6 +205,105 @@ in_array() {
 		[[ $item = "${needle}" ]] && return 0
 	done
 	return 1 # Not Found
+}
+
+add_daemon() {
+	[[ -d /run/sv.d ]] || mkdir -p /run/sv.d
+	>| /run/sv.d/"$1"
+}
+
+rm_daemon() {
+	rm -f /run/sv.d/"$1"
+}
+
+ck_daemon() {
+	[[ ! -f /run/sv.d/$1 ]]
+}
+
+# Check if $1 is a valid daemon name
+have_daemon() {
+	[[ -f @RCDIR@/sv.d/$1 && -x @RCDIR@/sv.d/$1 ]]
+}
+
+# Check if $1 is started at boot
+ck_autostart() {
+	local daemon
+	for daemon in "${DAEMONS[@]}"; do
+		[[ $1 = "${daemon#@}" ]] && return 1
+	done
+	return 0
+}
+
+start_daemon() {
+	have_daemon "$1" && @RCDIR@/sv.d/"$1" start
+}
+
+start_daemon_bkgd() {
+	stat_bkgd "Starting $1"
+	(start_daemon "$1") >/dev/null &
+}
+
+stop_daemon() {
+	have_daemon "$1" && @RCDIR@/sv.d/"$1" stop
+}
+
+# Status functions
+status_started() {
+	deltext
+	echo -ne "$C_OTHER[${C_STRT}STARTED$C_OTHER]$C_CLEAR "
+}
+
+status_stopped() {
+	deltext
+	echo -ne "$C_OTHER[${C_STRT}STOPPED$C_OTHER]$C_CLEAR "
+}
+
+ck_status() {
+	! ck_daemon "$1" && status_started || status_stopped
+}
+
+# Return PID of $1
+get_pid() {
+	pidof -o %PPID $1 || return 1
+}
+
+# Check if PID-file $1 is still the active PID-file for command $2
+ck_pidfile() {
+	if [[ -f $1 ]]; then
+		local fpid ppid
+		read -r fpid <"$1"
+		ppid=$(get_pid "$2")
+		[[ $fpid = "${ppid}" ]] && return 0
+	fi
+	return 1
+}
+
+# PIDs to be omitted by killall5
+declare -a omit_pids
+
+add_omit_pids() {
+	omit_pids+=( $@ )
+}
+
+# Stop all daemons
+# This function should *never* ever perform any other actions beside calling stop_daemon()!
+# It might be used by a splash system etc. to get a list of daemons to be stopped.
+stop_all_daemons() {
+	# Find daemons NOT in the DAEMONS array. Shut these down first
+	local daemon
+	for daemon in /run/sv.d/*; do
+		[[ -f $daemon ]] || continue
+		daemon=${daemon##*/}
+		ck_autostart "$daemon" && stop_daemon "$daemon"
+	done
+
+	# Shutdown daemons in reverse order
+	local i daemon
+	for (( i=${#DAEMONS[@]}-1; i>=0; i-- )); do
+		[[ ${DAEMONS[i]} = '!'* ]] && continue
+		daemon=${DAEMONS[i]#@}
+		ck_daemon "$daemon" || stop_daemon "$daemon"
+	done
 }
 
 kill_all() {

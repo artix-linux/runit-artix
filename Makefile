@@ -10,6 +10,11 @@ RUNSVDIR = $(RUNITDIR)/runsvdir
 SERVICEDIR = /etc/service
 RUNDIR = /run/runit
 RCDIR = $(SYSCONFDIR)/rc
+RCSVDIR = $(RCDIR)/sv.d
+
+SVD = rc/sv.d/hwclock rc/sv.d/netfs
+
+RCSVBIN = rc/rc-sv
 
 TMPFILES = tmpfile.conf
 
@@ -53,7 +58,7 @@ endif
 all-runit:
 		$(CC) $(CFLAGS) pause.c -o pause $(LDFLAGS)
 
-all-rc: $(RC) $(STAGES)
+all-rc: $(RC) $(STAGES) $(RCSVBIN) $(SVD)
 
 install-runit:
 	install -d $(DESTDIR)$(RUNITDIR)
@@ -92,6 +97,13 @@ install-rc:
 	install -d $(DESTDIR)$(RUNITDIR)
 	install -m755 $(STAGES) $(DESTDIR)$(RUNITDIR)
 
+	install -d $(DESTDIR)$(BINDIR)
+	install -m755 $(RCSVBIN) $(DESTDIR)$(BINDIR)
+
+	install -d $(DESTDIR)$(RCSVDIR)
+	install -m644 $(SVD) $(DESTDIR)$(RCSVDIR)
+
+
 install-getty:
 	install -d $(DESTDIR)$(SVDIR)
 	$(CP) sv/agetty-* $(DESTDIR)$(SVDIR)/
@@ -108,8 +120,7 @@ clean-runit:
 	-rm -f pause
 
 clean-rc:
-	-rm -f $(RC)
-	-rm -f $(STAGES)
+	-rm -f $(RC) $(STAGES) $(RCSVBIN) $(SVD)
 
 clean: clean-runit
 ifeq ($(HASRC),yes)
