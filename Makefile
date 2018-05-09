@@ -10,11 +10,12 @@ RUNSVDIR = $(RUNITDIR)/runsvdir
 SERVICEDIR = /etc/service
 RUNDIR = /run/runit
 RCDIR = $(SYSCONFDIR)/rc
-RCSVDIR = $(RCDIR)/sv.d
-
-SVD = rc/sv.d/hwclock rc/sv.d/netfs
 
 RCSVBIN = rc/rc-sv
+
+SYSINITD = $(wildcard rc/sysinit.d/*)
+SHUTDOWND = $(wildcard rc/shutdown.d/*)
+SVD = $(wildcard rc/sv.d/*)
 
 TMPFILES = tmpfile.conf
 
@@ -92,16 +93,16 @@ install-rc:
 	install -d $(DESTDIR)$(RCDIR)/sysinit.d
 	install -d $(DESTDIR)$(RCDIR)/shutdown.d
 	install -m755 $(RC) $(DESTDIR)$(RCDIR)
-	install -m644 rc/sysinit.d/* $(DESTDIR)$(RCDIR)/sysinit.d
-	install -m644 rc/shutdown.d/* $(DESTDIR)$(RCDIR)/shutdown.d
+	install -m644 $(SYSINITD) $(DESTDIR)$(RCDIR)/sysinit.d
+	install -m644 $(SHUTDOWND) $(DESTDIR)$(RCDIR)/shutdown.d
 	install -d $(DESTDIR)$(RUNITDIR)
 	install -m755 $(STAGES) $(DESTDIR)$(RUNITDIR)
 
 	install -d $(DESTDIR)$(BINDIR)
 	install -m755 $(RCSVBIN) $(DESTDIR)$(BINDIR)
 
-	install -d $(DESTDIR)$(RCSVDIR)
-	install -m644 $(SVD) $(DESTDIR)$(RCSVDIR)
+	install -d $(DESTDIR)$(RCDIR)/sv.d
+	install -m644 $(SVD) $(DESTDIR)$(RCDIR)/sv.d
 
 
 install-getty:
