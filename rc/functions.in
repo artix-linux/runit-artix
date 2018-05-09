@@ -173,13 +173,6 @@ udevd_modprobe() {
 	calc_columns
 }
 
-activate_vgs() {
-	[[ $USELVM = [yY][eE][sS] && -x $(type -P lvm) && -d /sys/block ]] || return 0
-	stat_busy "Activating LVM2 groups"
-		vgchange --sysinit -a y >/dev/null
-	(( $? == 0 )) && stat_done || stat_fail
-}
-
 do_unlock_legacy() {
 	# $1 = requested name
 	# $2 = source device
