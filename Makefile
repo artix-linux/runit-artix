@@ -89,7 +89,6 @@ install-rc:
 	install -m755 $(RC) $(DESTDIR)$(RCDIR)
 	install -m644 rc/sysinit.d/* $(DESTDIR)$(RCDIR)/sysinit.d
 	install -m644 rc/shutdown.d/* $(DESTDIR)$(RCDIR)/shutdown.d
-	install -m644 rc/crypt.awk $(DESTDIR)$(RCDIR)
 	install -d $(DESTDIR)$(RUNITDIR)
 	install -m755 $(STAGES) $(DESTDIR)$(RUNITDIR)
 

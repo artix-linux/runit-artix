@@ -276,14 +276,6 @@ do_unlock() {
 	return $?
 }
 
-deactivate_crypt() {
-	if [[ -x /usr/bin/dmsetup ]]; then
-		for v in $(dmsetup ls --target crypt --exec "dmsetup info -c --noheadings -o open,name"); do
-			[[ ${v%%:*} == "0" ]] && cryptsetup close ${v##*:}
-		done
-	fi
-}
-
 set_timezone() {
 	local tz=$1 zonefile=/usr/share/zoneinfo/$1
 
