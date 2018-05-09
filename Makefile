@@ -13,9 +13,10 @@ RCDIR = $(SYSCONFDIR)/rc
 
 RCBIN = rc/rc-sv rc/rc-sysinit rc/rc-shutdown
 
-SYSINITD = $(wildcard rc/sysinit.d/*)
-SHUTDOWND = $(wildcard rc/shutdown.d/*)
-SVD = $(wildcard rc/sv.d/*)
+SYSINITD = $(wildcard rc/sysinit.d/*.sh)
+SHUTDOWND = $(wildcard rc/shutdown.d/*.sh)
+# SVD = $(wildcard rc/sv.d/*)
+SVD = rc/sv.d/hwclock rc/sv.d/netfs
 
 TMPFILES = tmpfile.conf
 
