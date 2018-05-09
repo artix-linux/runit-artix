@@ -104,7 +104,7 @@ install-rc:
 
 	install -d $(DESTDIR)$(LIBDIR)/rc
 	install -m644 $(RCFUNC) $(DESTDIR)$(LIBDIR)/rc
-	$(LN) $(LIBDIR)/rc/$(RCFUNC) $(DESTDIR)$(RCDIR)/$(RCFUNC)
+	$(LN) $(LIBDIR)/rc/functions $(DESTDIR)$(RCDIR)/functions
 
 	install -d $(DESTDIR)$(RCDIR)/sv.d
 	install -m644 $(SVD) $(DESTDIR)$(RCDIR)/sv.d
