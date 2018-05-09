@@ -2,22 +2,8 @@
 
 PATH=/usr/bin:/usr/sbin
 
-. @RCDIR@/rc.conf
-. @RCDIR@/functions
-
-# Prints distro name and URL
-print_welcome
-
-run_hook sysinit_start
-
-for sysinit in @RCDIR@/sysinit.d/*; do
-	. $sysinit
-done
-
-run_hook sysinit_end
+rc-sysinit
 
 install -m100 /dev/null @RUNDIR@/stopit
 
 status "Initialization complete"
-
-bootlogd_stop

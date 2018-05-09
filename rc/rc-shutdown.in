@@ -1,0 +1,20 @@
+#!/bin/bash
+
+. @RCDIR@/rc.conf
+. @RCDIR@/functions
+. @RCDIR@/rc.shutdown
+
+# avoid staircase effect
+stty onlcr
+
+echo " "
+printhl "Initiating shutdown..."
+echo " "
+
+run_hook shutdown_start
+
+for shutdown in @RCDIR@/shutdown.d/*; do
+	. $shutdown
+done
+
+run_hook shutdown_poweroff

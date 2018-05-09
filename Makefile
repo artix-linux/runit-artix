@@ -11,7 +11,7 @@ SERVICEDIR = /etc/service
 RUNDIR = /run/runit
 RCDIR = $(SYSCONFDIR)/rc
 
-RCSVBIN = rc/rc-sv
+RCBIN = rc/rc-sv rc/rc-sysinit rc/rc-shutdown
 
 SYSINITD = $(wildcard rc/sysinit.d/*)
 SHUTDOWND = $(wildcard rc/shutdown.d/*)
@@ -23,7 +23,8 @@ BIN = zzz pause modules-load
 
 STAGES = 1 2 3 ctrlaltdel
 
-RC = rc/rc.local rc/rc.shutdown rc/functions rc/rc.conf
+RC = rc/rc.local rc/rc.shutdown.local rc/rc.conf
+RCFUNC = rc/functions
 
 LN = ln -sf
 CP = cp -R --no-dereference --preserve=mode,links -v
@@ -59,7 +60,7 @@ endif
 all-runit:
 		$(CC) $(CFLAGS) pause.c -o pause $(LDFLAGS)
 
-all-rc: $(RC) $(STAGES) $(RCSVBIN) $(SVD)
+all-rc: $(RC) $(STAGES) $(RCBIN) $(SVD) $(RCFUNC)
 
 install-runit:
 	install -d $(DESTDIR)$(RUNITDIR)
@@ -99,7 +100,11 @@ install-rc:
 	install -m755 $(STAGES) $(DESTDIR)$(RUNITDIR)
 
 	install -d $(DESTDIR)$(BINDIR)
-	install -m755 $(RCSVBIN) $(DESTDIR)$(BINDIR)
+	install -m755 $(RCBIN) $(DESTDIR)$(BINDIR)
+
+	install -d $(DESTDIR)$(LIBDIR)/rc
+	install -m644 $(RCFUNC) $(DESTDIR)$(LIBDIR)/rc
+	$(LN) $(LIBDIR)/rc/$(RCFUNC) $(DESTDIR)$(RCDIR)/$(RCFUNC)
 
 	install -d $(DESTDIR)$(RCDIR)/sv.d
 	install -m644 $(SVD) $(DESTDIR)$(RCDIR)/sv.d
@@ -121,7 +126,7 @@ clean-runit:
 	-rm -f pause
 
 clean-rc:
-	-rm -f $(RC) $(STAGES) $(RCSVBIN) $(SVD)
+	-rm -f $(RC) $(STAGES) $(RCBIN) $(SVD) $(RCFUNC)
 
 clean: clean-runit
 ifeq ($(HASRC),yes)
