@@ -11,12 +11,12 @@ RUNSVDIR = $(RUNITDIR)/runsvdir
 SERVICEDIR = /etc/service
 RUNDIR = /run/runit
 
-
 RCDIR = $(SYSCONFDIR)/rc
 RCLIBDIR = $(LIBDIR)/rc
 RCSVDIR = $(RCDIR)/sv.d
 
-RCBIN = rc/rc-sv rc/rc-sysinit rc/rc-shutdown
+RCBIN = rc/rc-sv
+#rc/rc-sysinit rc/rc-shutdown
 
 RCSVD = \
 	rc/sv.d/api-fs \

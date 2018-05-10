@@ -13,7 +13,7 @@ for arg in $(cat /proc/cmdline); do
 done
 
 runsvchdir "${runlevel}"
-# mkdir -p @RUNDIR@/runsvdir
+
 ln -s @RUNSVDIR@/current @SERVICEDIR@
 
 exec env - PATH=$PATH \

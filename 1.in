@@ -2,7 +2,59 @@
 
 PATH=/usr/bin:/usr/sbin
 
-rc-sysinit
+. @RCLIBDIR@/functions
+
+# Prints distro name and URL
+print_welcome
+
+calc_columns
+
+# run rc-sv
+rc-sv start api-fs
+
+rc-sv start bootlogd
+
+rc-sv start hostname
+
+rc-sv start hwclock
+
+rc-sv start kmod-static-nodes
+
+rc-sv start tmpfiles-dev
+
+rc-sv start udev
+
+calc_columns
+
+rc-sv start console-setup
+
+rc-sv start net-lo
+
+rc-sv start fsck
+
+rc-sv start remount-rw
+
+rc-sv start mount-all
+
+rc-sv start swap
+
+rc-sv start timezone
+
+rc-sv start random-seed
+
+rc-sv start tmpfiles-setup
+
+rc-sv start sysusers
+
+rc-sv start dmesg
+
+rc-sv start sysctl
+
+rc-sv start binfmt
+
+rc-sv start cleanup
+
+rc-sv stop bootlogd
 
 install -m100 /dev/null @RUNDIR@/stopit
 
