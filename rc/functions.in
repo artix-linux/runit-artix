@@ -6,7 +6,7 @@
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 # clear the TZ envvar, so daemons always respect /etc/localtime
-# unset TZ
+unset TZ
 
 . /etc/profile.d/locale.sh
 
@@ -156,7 +156,7 @@ have_daemon() {
 
 # Check if $1 is started at boot
 ck_autostart() {
-	local daemon
+	local daemon DAEMONS=()
 	for daemon in "${DAEMONS[@]}"; do
 		[[ $1 = "${daemon#@}" ]] && return 1
 	done

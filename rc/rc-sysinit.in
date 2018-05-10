@@ -5,6 +5,8 @@
 # Prints distro name and URL
 print_welcome
 
+calc_columns
+
 # run rc-sv
 rc-sv start api-fs
 
@@ -19,6 +21,8 @@ rc-sv start kmod-static-nodes
 rc-sv start tmpfiles-dev
 
 rc-sv start udev
+
+calc_columns
 
 rc-sv start console-setup
 

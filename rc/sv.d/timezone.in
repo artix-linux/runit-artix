@@ -9,16 +9,9 @@ case "$1" in
         stat_busy "Setting timezone"
         zonefile=/usr/share/zoneinfo/$TIMEZONE
 
-        [[ $TIMEZONE ]] || return 1
+#         [[ $TIMEZONE ]] || return 1
 
-        if [[ ! -e $zonefile ]]; then
-            printf "error: \`%s' is not a valid time zone\n" "$TIMEZONE"
-            return 1
-        fi
-
-        if [[ -L /etc/localtime && /etc/localtime -ef $zonefile ]]; then
-            return 0
-        else
+        if [[ ! -L /etc/localtime && /etc/localtime -ef $zonefile ]]; then
             ln -sf "/usr/share/zoneinfo/$TIMEZONE" /etc/localtime
         fi
         add_daemon timezone
@@ -28,16 +21,9 @@ case "$1" in
         stat_busy "Setting timezone"
         zonefile=/usr/share/zoneinfo/$TIMEZONE
 
-        [[ $TIMEZONE ]] || return 1
+#         [[ $TIMEZONE ]] || return 1
 
-        if [[ ! -e $zonefile ]]; then
-            printf "error: \`%s' is not a valid time zone\n" "$TIMEZONE"
-            return 1
-        fi
-
-        if [[ -L /etc/localtime && /etc/localtime -ef $zonefile ]]; then
-            return 0
-        else
+        if [[ ! -L /etc/localtime && /etc/localtime -ef $zonefile ]]; then
             ln -sf "/usr/share/zoneinfo/$TIMEZONE" /etc/localtime
         fi
         rm_daemon timezone

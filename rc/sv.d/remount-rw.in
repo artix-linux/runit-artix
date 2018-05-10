@@ -11,6 +11,7 @@ case "$1" in
         add_daemon remount-rw
         stat_done
         ;;
+    *)
         echo "usage: $0 {start}"
         exit 1
         ;;

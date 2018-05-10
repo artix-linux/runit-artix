@@ -30,7 +30,7 @@ RCSVD = \
 	rc/sv.d/hostname \
 	rc/sv.d/hwclock \
 	rc/sv.d/kill-all \
-	rc/sv.d/kmod-static-modes \
+	rc/sv.d/kmod-static-nodes \
 	rc/sv.d/lvm-monitoring \
 	rc/sv.d/lvm \
 	rc/sv.d/mount-all \
