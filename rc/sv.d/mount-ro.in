@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # sourcing our current rc.conf requires this to be a bash script
-. @RCDIR@/rc.conf
 . @RCLIBDIR@/functions
 
 case "$1" in

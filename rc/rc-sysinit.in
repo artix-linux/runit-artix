@@ -1,6 +1,7 @@
 #!/bin/bash
 
 . @RCLIBDIR@/functions
+. @RCDIR@/rc.conf
 
 # Prints distro name and URL
 print_welcome
@@ -27,6 +28,16 @@ calc_columns
 rc-sv start console-setup
 
 rc-sv start net-lo
+
+if [[ $USELVM = [yY][eE][sS] && -x $(type -P lvm) && -d /sys/block ]];then
+
+    rc-sv start lvm
+
+    rc-sv start lvm-monitoring
+
+    [[ -f /etc/crypttab && -x $(type -p cryptsetup) ]] && \
+    rc-sv start cryptsetup
+fi
 
 rc-sv start fsck
 

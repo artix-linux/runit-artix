@@ -1,18 +1,17 @@
 #!/bin/bash
 
-. @RCDIR@/rc.conf
 . @RCLIBDIR@/functions
 
 case "$1" in
     start)
         stat_busy "Starting monitoring of LVM2 groups"
-        activate_lvm_monitor
+        vgchange --monitor y >/dev/null || stat_die
         add_daemon lvm-monitoring
         stat_done
         ;;
     stop)
         stat_busy "Stopping monitoring of LVM2 groups"
-        deactivate_lvm_monitor
+        vgchange --monitor n || stat_die
         rm_daemon lvm-monitoring
         stat_done
         ;;

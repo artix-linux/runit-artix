@@ -1,25 +1,26 @@
 #!/bin/bash
 
 # sourcing our current rc.conf requires this to be a bash script
-. @RCDIR@/rc.conf
 . @RCLIBDIR@/functions
 
 case "$1" in
     start)
         stat_busy "Starting udev"
         udevd --daemon
-
+        rc=$?
         udevadm trigger --action=add --type=subsystems
         udevadm trigger --action=add --type=devices
+        (( rc || $? )) && stat_die
 
         modules-load
         udevadm settle
+
         add_daemon udev
         stat_done
         ;;
     stop)
         stat_busy "Stopping udev"
-        udevadm control --exit
+        udevadm control --exit || stat_die
         rm_daemon udev
         stat_done
         ;;

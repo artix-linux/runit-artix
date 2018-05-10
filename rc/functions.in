@@ -137,16 +137,16 @@ in_array() {
 }
 
 add_daemon() {
-	[[ -d /run/rc/sv.d ]] || mkdir -p /run/rc/sv.d
-	>| /run/rc/sv.d/"$1"
+	[[ -d @RCRUNDIR@ ]] || mkdir -p @RCRUNDIR@
+	>| @RCRUNDIR@/"$1"
 }
 
 rm_daemon() {
-	rm -f /run/rc/sv.d/"$1"
+	rm -f @RCRUNDIR@/"$1"
 }
 
 ck_daemon() {
-	[[ ! -f /run/rc/sv.d/$1 ]]
+	[[ ! -f @RCRUNDIR@/$1 ]]
 }
 
 # Check if $1 is a valid daemon name
@@ -186,34 +186,6 @@ ck_status() {
 	! ck_daemon "$1" && status_started || status_stopped
 }
 
-# Start daemons eventually in the modules sh
-# start_all_daemons() {
-#     for daemon in "${DAEMONS[@]}"; do
-#         case ${daemon:0:1} in
-#             *)   start_daemon "$daemon";;
-#         esac
-#     done
-# }
-
-# Stop all daemons
-# This function should *never* ever perform any other actions beside calling stop_daemon()!
-# It might be used by a splash system etc. to get a list of daemons to be stopped.
-# stop_all_daemons() {
-# 	# Find daemons NOT in the DAEMONS array. Shut these down first
-# 	local daemon
-# 	for daemon in /run/rc/sv.d/*; do
-# 		[[ -f $daemon ]] || continue
-# 		daemon=${daemon##*/}
-# 		ck_autostart "$daemon" && stop_daemon "$daemon"
-# 	done
-#
-# 	# Shutdown daemons in reverse order
-# 	local i daemon
-# 	for (( i=${#DAEMONS[@]}-1; i>=0; i-- )); do
-# 		ck_daemon "$daemon" || stop_daemon "$daemon"
-# 	done
-# }
-
 print_welcome() {
 	# see os-release(5)
 	. /etc/os-release
@@ -230,36 +202,6 @@ print_leave(){
     echo " "
     printhl "Initiating shutdown\n"
     echo " "
-}
-
-activate_vgs() {
-	[[ $USELVM = [yY][eE][sS] && -x $(type -P lvm) && -d /sys/block ]] || return 0
-# 	stat_busy "Activating LVM2 groups"
-    vgchange --sysinit -a y >/dev/null
-# 	(( $? == 0 )) && stat_done || stat_fail
-}
-
-deactivate_vgs(){
-    [[ $USELVM = [Yy][Ee][Ss] && -x $(type -P lvm) ]] #&&
-#         stat_busy "Deactivating LVM2 groups"
-    vgchange --sysinit -a n &>/dev/null
-#     (( $? == 0 )) && stat_done || stat_fail
-}
-
-activate_lvm_monitor(){
-    # Enable monitoring of LVM2 groups, now that the filesystems are mounted rw
-    [[ $USELVM = [Yy][Ee][Ss] && -x $(type -P lvm) && -d /sys/block ]] #&&
-#         stat_busy "Activating monitoring of LVM2 groups"
-    vgchange --monitor y >/dev/null
-    (( $? == 0 )) && stat_done || stat_fail
-}
-
-deactivate_lvm_monitor(){
-    # stop monitoring of LVM2 groups before unmounting filesystems
-    [[ $USELVM = [Yy][Ee][Ss] && -x $(type -P lvm) ]] #&&
-#         stat_busy "Deactivating monitoring of LVM2 groups"
-    vgchange --monitor n
-#     (( $? == 0 )) && stat_done || stat_fail
 }
 
 do_unlock_device() {
@@ -376,23 +318,6 @@ read_crypttab() {
 		fi
 	done 3< /etc/crypttab
 	return $failed
-}
-
-activate_crypt(){
-    if [[ -f /etc/crypttab ]] && type -p cryptsetup >/dev/null; then
-        read_crypttab do_unlock
-        # Maybe someone has LVM on an encrypted block device
-        activate_vgs
-    fi
-}
-
-deactivate_crypt(){
-    if [[ -f /etc/crypttab ]] && type -p cryptsetup >/dev/null; then
-        # Maybe someone has LVM on an encrypted block device
-        # executing an extra vgchange is errorless
-        deactivate_vgs
-        read_crypttab do_lock
-    fi
 }
 
 # Filesystem functions

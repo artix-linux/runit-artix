@@ -1,6 +1,5 @@
 #!/bin/bash
 
-. @RCDIR@/rc.conf
 . @RCLIBDIR@/functions
 
 case $HARDWARECLOCK in

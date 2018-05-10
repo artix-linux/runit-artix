@@ -2,36 +2,18 @@
 
 PATH=/usr/bin:/usr/sbin
 
-status "Stop services ..." sv force-stop @RUNDIR@/service/*
-status "Exit services ..." sv exit @RUNDIR@/service/*
+. @RCLIBDIR@/functions
+
+stat_busy "Stop services ..." sv force-stop @RUNDIR@/service/*
+stat_done
+stat_busy "Exit services ..." sv exit @RUNDIR@/service/*
+stat_done
 
 if [ -e @RUNDIR@/reboot ]; then
     chmod 100 @RUNDIR@/reboot
 fi
 
-. @RCLIBDIR@/functions
-
-print_leave
-
-[[ -x @RCDIR@/rc.local.shutdown ]] && @RCDIR@/rc.local.shutdown
-
-# run rc-sv
-
-rc-sv stop random-seed
-
-rc-sv stop timezone
-
-rc-sv stop cleanup
-
-rc-sv stop udev
-
-rc-sv start kill-all
-
-rc-sv stop swap
-
-rc-sv stop api-fs
-
-rc-sv start mount-ro
+rc-shutdown
 
 if [ -e @RUNDIR@/reboot ]; then
     [[ -x $(type -P kexec) ]] && kexec -e &>/dev/null

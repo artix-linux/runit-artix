@@ -14,9 +14,9 @@ RUNDIR = /run/runit
 RCDIR = $(SYSCONFDIR)/rc
 RCLIBDIR = $(LIBDIR)/rc
 RCSVDIR = $(RCDIR)/sv.d
+RCRUNDIR = /run/rc-sv
 
-RCBIN = rc/rc-sv
-#rc/rc-sysinit rc/rc-shutdown
+RCBIN = rc/rc-sv rc/rc-sysinit rc/rc-shutdown
 
 RCSVD = \
 	rc/sv.d/api-fs \

@@ -1,18 +1,17 @@
 #!/bin/bash
 
-. @RCDIR@/rc.conf
 . @RCLIBDIR@/functions
 
 case "$1" in
     start)
         stat_busy "Starting LVM2 groups"
-        activate_vgs
+        vgchange --sysinit -a y >/dev/null || stat_die
         add_daemon lvm
         stat_done
         ;;
     stop)
         stat_busy "Stopping LVM2 groups"
-        deactivate_vgs
+        vgchange --sysinit -a n &>/dev/null || stat_die
         rm_daemon lvm
         stat_done
         ;;

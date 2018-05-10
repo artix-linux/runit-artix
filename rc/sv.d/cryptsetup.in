@@ -1,18 +1,23 @@
 #!/bin/bash
 
-. @RCDIR@/rc.conf
 . @RCLIBDIR@/functions
 
 case "$1" in
     start)
         stat_busy "Starting encrypted devices"
-        activate_crypt
+        read_crypttab do_unlock
+        rc=$?
+        vgchange --sysinit -a y >/dev/null
+        (( rc || $? )) && stat_die
         add_daemon cryptsetup
         stat_done
         ;;
     stop)
         stat_busy "Stopping encrypted devices"
-        deactivate_crypt
+        vgchange --sysinit -a n &>/dev/null
+        rc=$?
+        read_crypttab do_lock
+        (( rc || $? )) && stat_die
         rm_daemon cryptsetup
         stat_done
         ;;
