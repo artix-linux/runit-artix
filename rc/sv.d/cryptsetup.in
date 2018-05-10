@@ -5,18 +5,18 @@
 
 case "$1" in
     start)
-        stat_busy "Activating encrypted devices"
+        stat_busy "Starting encrypted devices"
         activate_crypt
         add_daemon cryptsetup
         stat_done
         ;;
     stop)
-        stat_busy "Deactivating encrypted devices"
+        stat_busy "Stopping encrypted devices"
         deactivate_crypt
         rm_daemon cryptsetup
         stat_done
         ;;
     *)
-        echo "usage: $0 {start|stop|restart}"
+        echo "usage: $0 {start|stop}"
         exit 1
 esac

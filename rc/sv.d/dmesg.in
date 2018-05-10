@@ -6,15 +6,9 @@
 
 case "$1" in
 	start)
-		stat_busy "Starting udev"
-		udevd_modprobe sysinit
-		add_daemon udev
-		stat_done
-		;;
-	stop)
-		stat_busy "Stopping udev"
-		udevadm control --exit
-		rm_daemon udev
+		stat_busy "Saving dmesg log"
+		do_dmesg
+		add_daemon dmesg
 		stat_done
 		;;
 	*)
@@ -22,3 +16,4 @@ case "$1" in
 		exit 1
 esac
 
+# vim: set ts=2 noet:

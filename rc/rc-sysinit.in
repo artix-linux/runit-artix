@@ -6,13 +6,9 @@
 # Prints distro name and URL
 print_welcome
 
-run_hook sysinit_start
-
 for sysinit in @RCDIR@/sysinit.d/*.sh; do
 	. $sysinit
 done
-
-run_hook sysinit_end
 
 [[ -x @RCDIR@/rc.local ]] && @RCDIR@/rc.local
 

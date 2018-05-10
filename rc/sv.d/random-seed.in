@@ -6,19 +6,18 @@
 
 case "$1" in
 	start)
-		stat_busy "Starting udev"
-		udevd_modprobe sysinit
-		add_daemon udev
+		stat_busy "Starting random-seed"
+		init_random_seed
+		add_daemon random-seed
 		stat_done
 		;;
 	stop)
-		stat_busy "Stopping udev"
-		udevadm control --exit
-		rm_daemon udev
+		stat_busy "Stopping random-seed"
+		save_random_seed
+		rm_daemon random-seed
 		stat_done
 		;;
 	*)
 		echo "usage: $0 {start|stop}"
 		exit 1
 esac
-

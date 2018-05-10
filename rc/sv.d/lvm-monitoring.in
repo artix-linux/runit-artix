@@ -5,23 +5,18 @@
 
 case "$1" in
     start)
-        stat_busy "Activating monitoring of LVM2 groups"
+        stat_busy "Starting monitoring of LVM2 groups"
         activate_lvm_monitor
         add_daemon lvm-monitoring
         stat_done
         ;;
     stop)
-        stat_busy "Deactivating monitoring of LVM2 groups"
+        stat_busy "Stopping monitoring of LVM2 groups"
         deactivate_lvm_monitor
         rm_daemon lvm-monitoring
         stat_done
         ;;
-    restart)
-        $0 stop
-        sleep 1
-        $0 start
-        ;;
     *)
-        echo "usage: $0 {start|stop|restart}"
+        echo "usage: $0 {start|stop}"
         exit 1
 esac

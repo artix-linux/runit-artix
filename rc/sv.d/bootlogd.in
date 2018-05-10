@@ -6,19 +6,18 @@
 
 case "$1" in
 	start)
-		stat_busy "Starting udev"
-		udevd_modprobe sysinit
-		add_daemon udev
+		stat_busy "Starting bootlogd"
+		bootlogd_start
+		add_daemon bootlogd
 		stat_done
 		;;
 	stop)
-		stat_busy "Stopping udev"
-		udevadm control --exit
-		rm_daemon udev
+		stat_busy "Stopping bootlogd"
+		bootlogd_stop
+		rm_daemon bootlogd
 		stat_done
 		;;
 	*)
 		echo "usage: $0 {start|stop}"
 		exit 1
 esac
-

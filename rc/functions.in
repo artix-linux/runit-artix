@@ -86,18 +86,6 @@ stat_busy() {
 	printf "   ${C_OTHER}[${C_BUSY}BUSY${C_OTHER}]${C_CLEAR} "
 }
 
-stat_bkgd() {
-	printf "${C_OTHER}${PREFIX_REG} ${C_MAIN}${1}${C_CLEAR} "
-	deltext
-	printf "   ${C_OTHER}[${C_BKGD}BKGD${C_OTHER}]${C_CLEAR} \n"
-}
-
-stat_append() {
-	printf "${RESTORE_POSITION}"
-	printf -- "${C_MAIN}${1}${C_CLEAR}"
-	printf "${SAVE_POSITION}"
-}
-
 stat_done() {
 	deltext
 	printf "   ${C_OTHER}[${C_DONE}DONE${C_OTHER}]${C_CLEAR} \n"
@@ -149,16 +137,16 @@ in_array() {
 }
 
 add_daemon() {
-	[[ -d /run/sv.d ]] || mkdir -p /run/sv.d
-	>| /run/sv.d/"$1"
+	[[ -d /run/rc/sv.d ]] || mkdir -p /run/rc/sv.d
+	>| /run/rc/sv.d/"$1"
 }
 
 rm_daemon() {
-	rm -f /run/sv.d/"$1"
+	rm -f /run/rc/sv.d/"$1"
 }
 
 ck_daemon() {
-	[[ ! -f /run/sv.d/$1 ]]
+	[[ ! -f /run/rc/sv.d/$1 ]]
 }
 
 # Check if $1 is a valid daemon name
@@ -177,11 +165,6 @@ ck_autostart() {
 
 start_daemon() {
 	have_daemon "$1" && @RCDIR@/sv.d/"$1" start
-}
-
-start_daemon_bkgd() {
-	stat_bkgd "Starting $1"
-	(start_daemon "$1") >/dev/null &
 }
 
 stop_daemon() {
@@ -207,8 +190,6 @@ ck_status() {
 start_all_daemons() {
     for daemon in "${DAEMONS[@]}"; do
         case ${daemon:0:1} in
-            '!') continue;;     # Skip this daemon.
-            '@') start_daemon_bkgd "${daemon#@}";;
             *)   start_daemon "$daemon";;
         esac
     done
@@ -220,7 +201,7 @@ start_all_daemons() {
 stop_all_daemons() {
 	# Find daemons NOT in the DAEMONS array. Shut these down first
 	local daemon
-	for daemon in /run/sv.d/*; do
+	for daemon in /run/rc/sv.d/*; do
 		[[ -f $daemon ]] || continue
 		daemon=${daemon##*/}
 		ck_autostart "$daemon" && stop_daemon "$daemon"
@@ -229,16 +210,16 @@ stop_all_daemons() {
 	# Shutdown daemons in reverse order
 	local i daemon
 	for (( i=${#DAEMONS[@]}-1; i>=0; i-- )); do
-		[[ ${DAEMONS[i]} = '!'* ]] && continue
-		daemon=${DAEMONS[i]#@}
 		ck_daemon "$daemon" || stop_daemon "$daemon"
 	done
 }
 
 kill_all() {
-    status "Sending TERM signal to processes" pkill --inverse -s0,1 -TERM
+    #status "Sending TERM signal to processes"
+    pkill --inverse -s0,1 -TERM
     sleep 1
-    status "Sending KILL signal to processes" pkill --inverse -s0,1 -KILL
+    #status "Sending KILL signal to processes"
+    pkill --inverse -s0,1 -KILL
 }
 
 print_welcome() {
@@ -264,55 +245,49 @@ load_modules() {
 udevd_modprobe() {
 	# $1 = where we are being called from.
 	# This is used to determine which hooks to run.
-	status "Starting udev daemon" udevd --daemon
 
-	run_hook "$1_udevlaunched"
+	udevd --daemon
 
-	stat_busy "Triggering udev uevents"
-		udevadm trigger --action=add --type=subsystems
-		udevadm trigger --action=add --type=devices
-	stat_done
+    udevadm trigger --action=add --type=subsystems
+    udevadm trigger --action=add --type=devices
 
 	# Load modules from the MODULES array and modules-load.d
-	status "Loading user-specified modules" load_modules
-
-	status "Waiting for udev uevents to be processed" \
-		udevadm settle
-
-	run_hook "$1_udevsettled"
+	#status "Loading user-specified modules"
+	load_modules
+    udevadm settle
 
 	# in case loading a module changed the display mode
-	calc_columns
+	#calc_columns
 }
 
 activate_vgs() {
 	[[ $USELVM = [yY][eE][sS] && -x $(type -P lvm) && -d /sys/block ]] || return 0
-	stat_busy "Activating LVM2 groups"
+# 	stat_busy "Activating LVM2 groups"
     vgchange --sysinit -a y >/dev/null
-	(( $? == 0 )) && stat_done || stat_fail
+# 	(( $? == 0 )) && stat_done || stat_fail
 }
 
 deactivate_vgs(){
-    [[ $USELVM = [Yy][Ee][Ss] && -x $(type -P lvm) ]] &&
-        stat_busy "Deactivating LVM2 groups"
+    [[ $USELVM = [Yy][Ee][Ss] && -x $(type -P lvm) ]] #&&
+#         stat_busy "Deactivating LVM2 groups"
     vgchange --sysinit -a n &>/dev/null
-    (( $? == 0 )) && stat_done || stat_fail
+#     (( $? == 0 )) && stat_done || stat_fail
 }
 
 activate_lvm_monitor(){
     # Enable monitoring of LVM2 groups, now that the filesystems are mounted rw
-    [[ $USELVM = [Yy][Ee][Ss] && -x $(type -P lvm) && -d /sys/block ]] &&
-        stat_busy "Activating monitoring of LVM2 groups"
+    [[ $USELVM = [Yy][Ee][Ss] && -x $(type -P lvm) && -d /sys/block ]] #&&
+#         stat_busy "Activating monitoring of LVM2 groups"
     vgchange --monitor y >/dev/null
     (( $? == 0 )) && stat_done || stat_fail
 }
 
 deactivate_lvm_monitor(){
     # stop monitoring of LVM2 groups before unmounting filesystems
-    [[ $USELVM = [Yy][Ee][Ss] && -x $(type -P lvm) ]] &&
-        stat_busy "Deactivating monitoring of LVM2 groups"
+    [[ $USELVM = [Yy][Ee][Ss] && -x $(type -P lvm) ]] #&&
+#         stat_busy "Deactivating monitoring of LVM2 groups"
     vgchange --monitor n
-    (( $? == 0 )) && stat_done || stat_fail
+#     (( $? == 0 )) && stat_done || stat_fail
 }
 
 do_unlock_device() {
@@ -412,7 +387,8 @@ do_unlock() {
 }
 
 do_lock() {
-	status "Detaching encrypted device ${1}" cryptsetup luksClose "$1" >/dev/null
+	#status "Detaching encrypted device ${1}"
+	cryptsetup luksClose "$1" >/dev/null
 }
 
 read_crypttab() {
@@ -447,6 +423,19 @@ deactivate_crypt(){
     fi
 }
 
+set_hostname(){
+    unset HOSTNAME
+
+    if [[ -s /etc/hostname ]]; then
+        HOSTNAME=$(< /etc/hostname)
+    fi
+
+    if [[ $HOSTNAME ]]; then
+#         stat_busy "Setting hostname: $HOSTNAME"
+        echo "$HOSTNAME" >| /proc/sys/kernel/hostname #&& stat_done || stat_fail
+    fi
+}
+
 set_timezone() {
 	local tz=$1 zonefile=/usr/share/zoneinfo/$1
 
@@ -476,6 +465,19 @@ run_binfmt() {
 				printf "%s" "$line" > /proc/sys/fs/binfmt_misc/register
 			done
 	done
+}
+
+
+do_fschk(){
+    if [[ -x $(type -P fsck) ]]; then
+        fsck_all >|"${FSCK_OUT:-/dev/stdout}" 2>|"${FSCK_ERR:-/dev/stdout}"
+        declare -r fsckret=$?
+        (( fsckret <= 1 )) || stat_fail
+    else
+        declare -r fsckret=0
+    fi
+
+    fsck_reboot $fsckret
 }
 
 # Filesystem functions
@@ -587,9 +589,9 @@ mk_tmpfiles_setup(){
     fi
 }
 
-remove_leftover() {
-	status 'Removing leftover files' tmpfiles --create --remove --clean
-}
+# remove_leftover() {
+# 	status 'Removing leftover files' tmpfiles --create --remove --clean
+# }
 
 mk_sysusers(){
     if [ -x /usr/bin/sysusers ]; then
@@ -597,55 +599,55 @@ mk_sysusers(){
     fi
 }
 
-###############################
-# Custom hooks in initscripts #
-###############################
-# Hooks can be used to include custom code in various places in the rc.* scripts
-#
-# Define a hook function in a functions.d file using:
-#  function_name() {
-#    ...
-#  }
-#  add_hook hook_name function_name
-# It is allowed to register several hook functions for the same hook
-# Is is also allowed to register the same hook function for several hooks
-#
-# Currently, the following hooks exist:
-# sysinit_start: at the beginning of rc.sysinit
-# shutdown_start: at the beginning of rc.shutdown
-# sysinit_end: at the end of rc.sysinit
-# sysinit_udevlaunched: after udev has been launched in rc.sysinit
-# sysinit_udevsettled: after uevents have settled in rc.sysinit
-# sysinit_premount: before local filesystems are mounted, but after root is mounted read-write in rc.sysinit
-# sysinit_postmount: after local filesystems are mounted
-# shutdown_prekillall: before all processes are being killed in rc.shutdown
-# shutdown_postkillall: after all processes have been killed in rc.shutdown
-# shutdown_preumount: after last filesystem write, but before filesystems are unmounted
-# shutdown_postumount: after filesystems are unmounted
-# shutdown_poweroff: directly before powering off in rc.shutdown
-#
-# Declare add_hook and run_hook as read-only to prevent overwriting them.
-# Too bad we cannot do the same thing with hook_funcs
+mount_api_fs(){
+    mountpoint -q /proc    || mount -t proc proc /proc -o nosuid,noexec,nodev
+    mountpoint -q /sys     || mount -t sysfs sys /sys -o nosuid,noexec,nodev
+    mountpoint -q /run     || mount -t tmpfs run /run -o mode=0755,nosuid,nodev
+    mountpoint -q /dev     || mount -t devtmpfs dev /dev -o mode=0755,nosuid
+    mkdir -p /dev/{pts,shm}
+    mountpoint -q /dev/pts || mount -t devpts devpts /dev/pts -o mode=0620,gid=5,nosuid,noexec
+    mountpoint -q /dev/shm || mount -t tmpfs shm /dev/shm -o mode=1777,nosuid,nodev
+    mountpoint -q /sys/kernel/security || mount -n -t securityfs securityfs /sys/kernel/security
+    [ -d /sys/firmware/efi ] && (mountpoint -q /sys/firmware/efi/efivars || mount -n -t efivarfs -o ro efivarfs /sys/firmware/efi/efivars)
+    mountpoint -q /sys/fs/cgroup || mount -o mode=0755 -t tmpfs cgroup /sys/fs/cgroup
+    mountpoint -q /sys/fs/cgroup/openrc || mkdir -p /sys/fs/cgroup/openrc && mount -t cgroup -o none,name=openrc cgroup /sys/fs/cgroup/openrc
+    awk '$4 == 1 { system("mountpoint -q /sys/fs/cgroup/" $1 " || { mkdir -p /sys/fs/cgroup/" $1 " && mount -t cgroup -o " $1 " cgroup /sys/fs/cgroup/" $1 " ;}" ) }' /proc/cgroups
 
-if (( RC_FUNCTIONS_HOOK_FUNCS_DEFINED != 1 )); then
-	declare -A hook_funcs
+    findmnt / --options ro &>/dev/null || mount -o remount,ro /
+}
 
-	add_hook() {
-		[[ $1 && $2 ]] || return 1
-		hook_funcs[$1]+=" $2"
-	}
+remount_api_fs(){
+    mount -o remount,rw /
+}
 
-	run_hook() {
-		[[ $1 ]] || return 1
-		local func
-		for func in ${hook_funcs["$1"]}; do
-			"${func}"
-		done
-	}
+umount_api_fs(){
+    umount -r -a -t nosysfs,noproc,nodevtmpfs,notmpfs
+}
 
-	declare -fr add_hook run_hook
-	declare -r RC_FUNCTIONS_HOOK_FUNCS_DEFINED=1
-fi
+do_dmesg(){
+    if [[ -e /proc/sys/kernel/dmesg_restrict ]] &&
+        (( $(< /proc/sys/kernel/dmesg_restrict) == 1 )); then
+        install -Tm 0600 <( dmesg ) /var/log/dmesg.log
+    else
+        install -Tm 0644 <( dmesg ) /var/log/dmesg.log
+    fi
+}
+
+cleanup_start(){
+    install -m0664 -o root -g utmp /dev/null /run/utmp
+    if [ ! -e /var/log/wtmp ]; then
+        install -m0664 -o root -g utmp /dev/null /var/log/wtmp
+    fi
+    if [ ! -e /var/log/btmp ]; then
+        install -m0600 -o root -g utmp /dev/null /var/log/btmp
+    fi
+
+    rm -f /etc/nologin /forcefsck /forcequotacheck /fastboot
+}
+
+cleanup_stop(){
+    halt -w
+}
 
 # set colors
 if [[ $USECOLOR != [nN][oO] ]]; then
@@ -678,9 +680,3 @@ fi
 
 PREFIX_REG="::"
 PREFIX_HL=" >"
-
-# Source additional functions at the end to allow overrides
-# for f in @RCDIR@/functions.d/*; do
-# 	[[ -e $f ]] && . "$f"
-# done
-
