@@ -2,16 +2,18 @@
 
 # sourcing our current rc.conf requires this to be a bash script
 . @RCDIR@/rc.conf
-. @RCDIR@/functions
+. @RCLIBDIR@/functions
 
 case "$1" in
-	start)
-		stat_busy "Starting kmod-static-modes"
-		mk_kmod_static_nodes
-		add_daemon kmod-static-modes
-		stat_done
-		;;
-	*)
-		echo "usage: $0 {start}"
-		exit 1
+    start)
+        stat_busy "Starting kmod-static-modes"
+        [[ -d /run/tmpfiles.d ]] || mkdir /run/tmpfiles.d
+        kmod static-nodes --format=tmpfiles --output=/run/tmpfiles.d/kmod.conf
+        add_daemon kmod-static-modes
+        stat_done
+        ;;
+    *)
+        echo "usage: $0 {start}"
+        exit 1
+        ;;
 esac

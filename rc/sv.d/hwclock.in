@@ -1,26 +1,27 @@
 #!/bin/bash
 
 . @RCDIR@/rc.conf
-. @RCDIR@/functions
+. @RCLIBDIR@/functions
 
 case $HARDWARECLOCK in
-	UTC) HWCLOCK_PARAMS="--utc";;
-	localtime) HWCLOCK_PARAMS="--localtime";;
-	*) HWCLOCK_PARAMS="";;
+    UTC) HWCLOCK_PARAMS="--utc";;
+    localtime) HWCLOCK_PARAMS="--localtime";;
+    *) HWCLOCK_PARAMS="";;
 esac
 
 case "$1" in
-	start)
-		add_daemon hwclock;;
-	stop)
-		hwclock --adjust $HWCLOCK_PARAMS
-		rm_daemon hwclock
-		;;
-	restart)
-		$0 stop
-		sleep 2
-		$0 start
-		;;
-	*)
-		echo "usage: $0 {start|stop|restart}"
+    start)
+        add_daemon hwclock;;
+    stop)
+        hwclock --adjust $HWCLOCK_PARAMS
+        rm_daemon hwclock
+        ;;
+    restart)
+        $0 stop
+        sleep 2
+        $0 start
+        ;;
+    *)
+        echo "usage: $0 {start|stop|restart}"
+        ;;
 esac

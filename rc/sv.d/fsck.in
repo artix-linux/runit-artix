@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# sourcing our current rc.conf requires this to be a bash script
+. @RCDIR@/rc.conf
+. @RCLIBDIR@/functions
+
+case "$1" in
+    start)
+        stat_busy "Checking filesystems"
+        if [[ -x $(type -P fsck) ]]; then
+            fsck_all >|"${FSCK_OUT:-/dev/stdout}" 2>|"${FSCK_ERR:-/dev/stdout}"
+            declare -r fsckret=$?
+        else
+            declare -r fsckret=0
+        fi
+        fsck_reboot $fsckret
+        add_daemon fsck
+        stat_done
+        ;;
+    *)
+        echo "usage: $0 {start}"
+        exit 1
+        ;;
+esac

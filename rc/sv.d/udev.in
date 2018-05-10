@@ -2,23 +2,30 @@
 
 # sourcing our current rc.conf requires this to be a bash script
 . @RCDIR@/rc.conf
-. @RCDIR@/functions
+. @RCLIBDIR@/functions
 
 case "$1" in
-	start)
-		stat_busy "Starting udev"
-		udevd_modprobe sysinit
-		add_daemon udev
-		stat_done
-		;;
-	stop)
-		stat_busy "Stopping udev"
-		udevadm control --exit
-		rm_daemon udev
-		stat_done
-		;;
-	*)
-		echo "usage: $0 {start|stop}"
-		exit 1
+    start)
+        stat_busy "Starting udev"
+        udevd --daemon
+
+        udevadm trigger --action=add --type=subsystems
+        udevadm trigger --action=add --type=devices
+
+        modules-load
+        udevadm settle
+        add_daemon udev
+        stat_done
+        ;;
+    stop)
+        stat_busy "Stopping udev"
+        udevadm control --exit
+        rm_daemon udev
+        stat_done
+        ;;
+    *)
+        echo "usage: $0 {start|stop}"
+        exit 1
+        ;;
 esac
 

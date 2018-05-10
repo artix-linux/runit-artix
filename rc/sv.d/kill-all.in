@@ -2,16 +2,19 @@
 
 # sourcing our current rc.conf requires this to be a bash script
 . @RCDIR@/rc.conf
-. @RCDIR@/functions
+. @RCLIBDIR@/functions
 
 case "$1" in
-	start)
-		stat_busy "Starting kill-all"
-		kill_all
-		add_daemon kill-all
-		stat_done
-		;;
-	*)
-		echo "usage: $0 {start}"
-		exit 1
+    start)
+        stat_busy "Starting kill-all"
+        pkill --inverse -s0,1 -TERM
+        sleep 1
+        pkill --inverse -s0,1 -KILL
+        add_daemon kill-all
+        stat_done
+        ;;
+    *)
+        echo "usage: $0 {start}"
+        exit 1
+        ;;
 esac

@@ -4,19 +4,48 @@ BINDIR = $(PREFIX)/bin
 MANDIR = $(PREFIX)/share/man
 LIBDIR = $(PREFIX)/lib
 TMPFILESDIR = $(LIBDIR)/tmpfiles.d
+
 RUNITDIR = $(SYSCONFDIR)/runit
 SVDIR = $(RUNITDIR)/sv
 RUNSVDIR = $(RUNITDIR)/runsvdir
 SERVICEDIR = /etc/service
 RUNDIR = /run/runit
+
+
 RCDIR = $(SYSCONFDIR)/rc
+RCLIBDIR = $(LIBDIR)/rc
+RCSVDIR = $(RCDIR)/sv.d
 
 RCBIN = rc/rc-sv rc/rc-sysinit rc/rc-shutdown
 
-SYSINITD = $(wildcard rc/sysinit.d/*.sh)
-SHUTDOWND = $(wildcard rc/shutdown.d/*.sh)
-# SVD = $(wildcard rc/sv.d/*)
-SVD = rc/sv.d/hwclock rc/sv.d/netfs rc/sv.d/lvm rc/sv.d/lvm-monitoring rc/sv.d/cryptsetup rc/sv.d/udev
+RCSVD = \
+	rc/sv.d/api-fs \
+	rc/sv.d/binfmt \
+	rc/sv.d/bootlogd \
+	rc/sv.d/cleanup \
+	rc/sv.d/console-setup \
+	rc/sv.d/cryptsetup \
+	rc/sv.d/dmesg \
+	rc/sv.d/fsck \
+	rc/sv.d/hostname \
+	rc/sv.d/hwclock \
+	rc/sv.d/kill-all \
+	rc/sv.d/kmod-static-modes \
+	rc/sv.d/lvm-monitoring \
+	rc/sv.d/lvm \
+	rc/sv.d/mount-all \
+	rc/sv.d/mount-ro \
+	rc/sv.d/net-lo \
+	rc/sv.d/netfs \
+	rc/sv.d/random-seed \
+	rc/sv.d/remount-rw \
+	rc/sv.d/swap \
+	rc/sv.d/sysctl \
+	rc/sv.d/sysusers \
+	rc/sv.d/timezone \
+	rc/sv.d/tmpfiles-dev \
+	rc/sv.d/tmpfiles-setup \
+	rc/sv.d/udev
 
 TMPFILES = tmpfile.conf
 
@@ -42,7 +71,8 @@ EDIT = sed \
 	-e "s|@SERVICEDIR[@]|$(SERVICEDIR)|g" \
 	-e "s|@RUNSVDIR[@]|$(RUNSVDIR)|g" \
 	-e "s|@RUNDIR[@]|$(RUNDIR)|g" \
-	-e "s|@RCDIR[@]|$(RCDIR)|g"
+	-e "s|@RCDIR[@]|$(RCDIR)|g" \
+	-e "s|@RCLIBDIR[@]|$(RCLIBDIR)|g"
 
 %: %.in Makefile
 	@echo "GEN $@"
@@ -61,7 +91,7 @@ endif
 all-runit:
 		$(CC) $(CFLAGS) pause.c -o pause $(LDFLAGS)
 
-all-rc: $(RC) $(STAGES) $(RCBIN) $(SVD) $(RCFUNC)
+all-rc: $(RC) $(STAGES) $(RCBIN) $(RCSVD) $(RCFUNC)
 
 install-runit:
 	install -d $(DESTDIR)$(RUNITDIR)
@@ -92,24 +122,20 @@ install-rc:
 	install -m755 $(STAGES) $(DESTDIR)$(RUNITDIR)
 
 	install -d $(DESTDIR)$(RCDIR)
-	install -d $(DESTDIR)$(RCDIR)/sysinit.d
-	install -d $(DESTDIR)$(RCDIR)/shutdown.d
+
 	install -m755 $(RC) $(DESTDIR)$(RCDIR)
-	install -m644 $(SYSINITD) $(DESTDIR)$(RCDIR)/sysinit.d
-	install -m644 $(SHUTDOWND) $(DESTDIR)$(RCDIR)/shutdown.d
+
 	install -d $(DESTDIR)$(RUNITDIR)
 	install -m755 $(STAGES) $(DESTDIR)$(RUNITDIR)
 
 	install -d $(DESTDIR)$(BINDIR)
 	install -m755 $(RCBIN) $(DESTDIR)$(BINDIR)
 
-	install -d $(DESTDIR)$(LIBDIR)/rc
-	install -m644 $(RCFUNC) $(DESTDIR)$(LIBDIR)/rc
-	$(LN) $(LIBDIR)/rc/functions $(DESTDIR)$(RCDIR)/functions
+	install -d $(DESTDIR)$(RCLIBDIR)
+	install -m644 $(RCFUNC) $(DESTDIR)$(RCLIBDIR)
 
-	install -d $(DESTDIR)$(RCDIR)/sv.d
-	install -m755 $(SVD) $(DESTDIR)$(RCDIR)/sv.d
-
+	install -d $(DESTDIR)$(RCSVDIR)
+	install -m755 $(RCSVD) $(DESTDIR)$(RCSVDIR)
 
 install-getty:
 	install -d $(DESTDIR)$(SVDIR)
@@ -127,7 +153,7 @@ clean-runit:
 	-rm -f pause
 
 clean-rc:
-	-rm -f $(RC) $(STAGES) $(RCBIN) $(SVD) $(RCFUNC)
+	-rm -f $(RC) $(STAGES) $(RCBIN) $(RCSVD) $(RCFUNC)
 
 clean: clean-runit
 ifeq ($(HASRC),yes)

@@ -155,13 +155,13 @@ have_daemon() {
 }
 
 # Check if $1 is started at boot
-ck_autostart() {
-	local daemon
-	for daemon in "${DAEMONS[@]}"; do
-		[[ $1 = "${daemon#@}" ]] && return 1
-	done
-	return 0
-}
+# ck_autostart() {
+# 	local daemon
+# 	for daemon in "${DAEMONS[@]}"; do
+# 		[[ $1 = "${daemon#@}" ]] && return 1
+# 	done
+# 	return 0
+# }
 
 start_daemon() {
 	have_daemon "$1" && @RCDIR@/sv.d/"$1" start
@@ -187,40 +187,32 @@ ck_status() {
 }
 
 # Start daemons eventually in the modules sh
-start_all_daemons() {
-    for daemon in "${DAEMONS[@]}"; do
-        case ${daemon:0:1} in
-            *)   start_daemon "$daemon";;
-        esac
-    done
-}
+# start_all_daemons() {
+#     for daemon in "${DAEMONS[@]}"; do
+#         case ${daemon:0:1} in
+#             *)   start_daemon "$daemon";;
+#         esac
+#     done
+# }
 
 # Stop all daemons
 # This function should *never* ever perform any other actions beside calling stop_daemon()!
 # It might be used by a splash system etc. to get a list of daemons to be stopped.
-stop_all_daemons() {
-	# Find daemons NOT in the DAEMONS array. Shut these down first
-	local daemon
-	for daemon in /run/rc/sv.d/*; do
-		[[ -f $daemon ]] || continue
-		daemon=${daemon##*/}
-		ck_autostart "$daemon" && stop_daemon "$daemon"
-	done
-
-	# Shutdown daemons in reverse order
-	local i daemon
-	for (( i=${#DAEMONS[@]}-1; i>=0; i-- )); do
-		ck_daemon "$daemon" || stop_daemon "$daemon"
-	done
-}
-
-kill_all() {
-    #status "Sending TERM signal to processes"
-    pkill --inverse -s0,1 -TERM
-    sleep 1
-    #status "Sending KILL signal to processes"
-    pkill --inverse -s0,1 -KILL
-}
+# stop_all_daemons() {
+# 	# Find daemons NOT in the DAEMONS array. Shut these down first
+# 	local daemon
+# 	for daemon in /run/rc/sv.d/*; do
+# 		[[ -f $daemon ]] || continue
+# 		daemon=${daemon##*/}
+# 		ck_autostart "$daemon" && stop_daemon "$daemon"
+# 	done
+#
+# 	# Shutdown daemons in reverse order
+# 	local i daemon
+# 	for (( i=${#DAEMONS[@]}-1; i>=0; i-- )); do
+# 		ck_daemon "$daemon" || stop_daemon "$daemon"
+# 	done
+# }
 
 print_welcome() {
 	# see os-release(5)
@@ -232,32 +224,12 @@ print_welcome() {
 	printsep
 }
 
-load_modules() {
-	local rc=0
-
-	/usr/bin/modules-load
-	(( rc+=$? ))
-
-	return $rc
-}
-
-# Start/trigger udev, load MODULES, and settle udev
-udevd_modprobe() {
-	# $1 = where we are being called from.
-	# This is used to determine which hooks to run.
-
-	udevd --daemon
-
-    udevadm trigger --action=add --type=subsystems
-    udevadm trigger --action=add --type=devices
-
-	# Load modules from the MODULES array and modules-load.d
-	#status "Loading user-specified modules"
-	load_modules
-    udevadm settle
-
-	# in case loading a module changed the display mode
-	#calc_columns
+print_leave(){
+    # avoid staircase effect
+    stty onlcr
+    echo " "
+    printhl "Initiating shutdown\n"
+    echo " "
 }
 
 activate_vgs() {
@@ -423,63 +395,6 @@ deactivate_crypt(){
     fi
 }
 
-set_hostname(){
-    unset HOSTNAME
-
-    if [[ -s /etc/hostname ]]; then
-        HOSTNAME=$(< /etc/hostname)
-    fi
-
-    if [[ $HOSTNAME ]]; then
-#         stat_busy "Setting hostname: $HOSTNAME"
-        echo "$HOSTNAME" >| /proc/sys/kernel/hostname #&& stat_done || stat_fail
-    fi
-}
-
-set_timezone() {
-	local tz=$1 zonefile=/usr/share/zoneinfo/$1
-
-	[[ $tz ]] || return 1
-
-	if [[ ! -e $zonefile ]]; then
-		printf "error: \`%s' is not a valid time zone\n" "$tz"
-		return 1
-	fi
-
-	if [[ -L /etc/localtime && /etc/localtime -ef $zonefile ]]; then
-		return 0
-	else
-		ln -sf "/usr/share/zoneinfo/$tz" /etc/localtime
-	fi
-}
-
-run_binfmt() {
-	mountpoint -q /proc/sys/fs/binfmt_misc || \
-		mount -t binfmt_misc binfmt /proc/sys/fs/binfmt_misc
-
-	for path in /usr/lib/binfmt.d /etc/binfmt.d /run/binfmt.d; do
-		[[ ! -d $path ]] && continue
-		[[ -z "$(ls $path)" ]] && continue
-		grep "^:" $path/* | \
-			while read -r line; do
-				printf "%s" "$line" > /proc/sys/fs/binfmt_misc/register
-			done
-	done
-}
-
-
-do_fschk(){
-    if [[ -x $(type -P fsck) ]]; then
-        fsck_all >|"${FSCK_OUT:-/dev/stdout}" 2>|"${FSCK_ERR:-/dev/stdout}"
-        declare -r fsckret=$?
-        (( fsckret <= 1 )) || stat_fail
-    else
-        declare -r fsckret=0
-    fi
-
-    fsck_reboot $fsckret
-}
-
 # Filesystem functions
 # These can be overridden/reused for customizations like shutdown/loop-fsck.
 NETFS="nfs,nfs4,smbfs,cifs,codafs,ncpfs,shfs,fuse,fuseblk,glusterfs,davfs,fuse.glusterfs"
@@ -530,123 +445,6 @@ fsck_reboot() {
 	mount -o remount,ro /
 	reboot -f
 	exit 0
-}
-
-mount_all() {
-	mount -a -t "no${NETFS//,/,no}" -O no_netdev
-}
-
-bootlogd_stop() {
-	[[ -f /run/bootlogd.pid ]] || return 0
-	touch /var/log/boot.log
-	kill $(< /run/bootlogd.pid)
-	rm -f /run/bootlogd.pid
-}
-
-bootlogd_start(){
-    bootlogd -p /run/bootlogd.pid -l /var/log/boot.log
-}
-
-console_setup(){
-    [ -r /etc/vconsole.conf ] && . /etc/vconsole.conf
-    TTYS=${TTYS:-6}
-    if [ -n "$FONT" ]; then
-        _index=0
-        while [ ${_index} -le $TTYS ]; do
-            setfont ${FONT_MAP:+-m $FONT_MAP} ${FONT_UNIMAP:+-u $FONT_UNIMAP} \
-                    $FONT -C "/dev/tty${_index}"
-            _index=$((_index + 1))
-        done
-    fi
-    if [ -n "$KEYMAP" ]; then
-        loadkeys -q -u ${KEYMAP}
-    fi
-}
-
-init_random_seed(){
-    cp /var/lib/random-seed /dev/urandom >/dev/null 2>&1 || true
-    ( umask 077; bytes=$(cat /proc/sys/kernel/random/poolsize) || bytes=512; dd if=/dev/urandom of=/var/lib/random-seed count=1 bs=$bytes >/dev/null 2>&1 )
-}
-
-save_random_seed(){
-    ( umask 077; bytes=$(cat /proc/sys/kernel/random/poolsize) || bytes=512; dd if=/dev/urandom of=/var/lib/random-seed count=1 bs=$bytes >/dev/null 2>&1 )
-}
-
-mk_kmod_static_nodes(){
-    [[ -d /run/tmpfiles.d ]] || mkdir /run/tmpfiles.d
-    kmod static-nodes --format=tmpfiles --output=/run/tmpfiles.d/kmod.conf
-}
-
-mk_tmpfiles_dev(){
-    if [ -x /usr/bin/tmpfiles ]; then
-        tmpfiles --prefix=/dev --create --boot
-    fi
-}
-
-mk_tmpfiles_setup(){
-    if [ -x /usr/bin/tmpfiles ]; then
-        tmpfiles --exclude-prefix=/dev --create --remove --boot
-    fi
-}
-
-# remove_leftover() {
-# 	status 'Removing leftover files' tmpfiles --create --remove --clean
-# }
-
-mk_sysusers(){
-    if [ -x /usr/bin/sysusers ]; then
-        sysusers
-    fi
-}
-
-mount_api_fs(){
-    mountpoint -q /proc    || mount -t proc proc /proc -o nosuid,noexec,nodev
-    mountpoint -q /sys     || mount -t sysfs sys /sys -o nosuid,noexec,nodev
-    mountpoint -q /run     || mount -t tmpfs run /run -o mode=0755,nosuid,nodev
-    mountpoint -q /dev     || mount -t devtmpfs dev /dev -o mode=0755,nosuid
-    mkdir -p /dev/{pts,shm}
-    mountpoint -q /dev/pts || mount -t devpts devpts /dev/pts -o mode=0620,gid=5,nosuid,noexec
-    mountpoint -q /dev/shm || mount -t tmpfs shm /dev/shm -o mode=1777,nosuid,nodev
-    mountpoint -q /sys/kernel/security || mount -n -t securityfs securityfs /sys/kernel/security
-    [ -d /sys/firmware/efi ] && (mountpoint -q /sys/firmware/efi/efivars || mount -n -t efivarfs -o ro efivarfs /sys/firmware/efi/efivars)
-    mountpoint -q /sys/fs/cgroup || mount -o mode=0755 -t tmpfs cgroup /sys/fs/cgroup
-    mountpoint -q /sys/fs/cgroup/openrc || mkdir -p /sys/fs/cgroup/openrc && mount -t cgroup -o none,name=openrc cgroup /sys/fs/cgroup/openrc
-    awk '$4 == 1 { system("mountpoint -q /sys/fs/cgroup/" $1 " || { mkdir -p /sys/fs/cgroup/" $1 " && mount -t cgroup -o " $1 " cgroup /sys/fs/cgroup/" $1 " ;}" ) }' /proc/cgroups
-
-    findmnt / --options ro &>/dev/null || mount -o remount,ro /
-}
-
-remount_api_fs(){
-    mount -o remount,rw /
-}
-
-umount_api_fs(){
-    umount -r -a -t nosysfs,noproc,nodevtmpfs,notmpfs
-}
-
-do_dmesg(){
-    if [[ -e /proc/sys/kernel/dmesg_restrict ]] &&
-        (( $(< /proc/sys/kernel/dmesg_restrict) == 1 )); then
-        install -Tm 0600 <( dmesg ) /var/log/dmesg.log
-    else
-        install -Tm 0644 <( dmesg ) /var/log/dmesg.log
-    fi
-}
-
-cleanup_start(){
-    install -m0664 -o root -g utmp /dev/null /run/utmp
-    if [ ! -e /var/log/wtmp ]; then
-        install -m0664 -o root -g utmp /dev/null /var/log/wtmp
-    fi
-    if [ ! -e /var/log/btmp ]; then
-        install -m0600 -o root -g utmp /dev/null /var/log/btmp
-    fi
-
-    rm -f /etc/nologin /forcefsck /forcequotacheck /fastboot
-}
-
-cleanup_stop(){
-    halt -w
 }
 
 # set colors

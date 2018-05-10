@@ -2,22 +2,26 @@
 
 # sourcing our current rc.conf requires this to be a bash script
 . @RCDIR@/rc.conf
-. @RCDIR@/functions
+. @RCLIBDIR@/functions
 
 case "$1" in
-	start)
-		stat_busy "Starting bootlogd"
-		bootlogd_start
-		add_daemon bootlogd
-		stat_done
-		;;
-	stop)
-		stat_busy "Stopping bootlogd"
-		bootlogd_stop
-		rm_daemon bootlogd
-		stat_done
-		;;
-	*)
-		echo "usage: $0 {start|stop}"
-		exit 1
+    start)
+        stat_busy "Starting bootlogd"
+        bootlogd -p /run/bootlogd.pid -l /var/log/boot.log
+        add_daemon bootlogd
+        stat_done
+        ;;
+    stop)
+        stat_busy "Stopping bootlogd"
+        [[ -f /run/bootlogd.pid ]] || return 0
+        touch /var/log/boot.log
+        kill $(< /run/bootlogd.pid)
+        rm -f /run/bootlogd.pid
+        rm_daemon bootlogd
+        stat_done
+        ;;
+    *)
+        echo "usage: $0 {start|stop}"
+        exit 1
+        ;;
 esac

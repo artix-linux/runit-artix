@@ -1,17 +1,25 @@
 #!/bin/bash
 
-. @RCDIR@/rc.conf
-. @RCDIR@/functions
+. @RCLIBDIR@/functions
 
-# avoid staircase effect
-stty onlcr
-
-echo " "
-printhl "Initiating shutdown..."
-echo " "
+print_leave
 
 [[ -x @RCDIR@/rc.local.shutdown ]] && @RCDIR@/rc.local.shutdown
 
-for shutdown in @RCDIR@/shutdown.d/*.sh; do
-	. $shutdown
-done
+# run rc-sv
+
+rc-sv stop random-seed
+
+rc-sv stop timezone
+
+rc-sv stop cleanup
+
+rc-sv stop udev
+
+rc-sv start kill-all
+
+ec-sv stop swap
+
+rc-sv stop api-fs
+
+rc-sv start mount-ro
