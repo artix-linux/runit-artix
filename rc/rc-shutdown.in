@@ -18,7 +18,7 @@ rc-sv stop udev
 
 rc-sv start kill-all
 
-ec-sv stop swap
+rc-sv stop swap
 
 rc-sv stop api-fs
 

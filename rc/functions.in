@@ -156,8 +156,8 @@ have_daemon() {
 
 # Check if $1 is started at boot
 ck_autostart() {
-	local daemon DAEMONS=()
-	for daemon in "${DAEMONS[@]}"; do
+	local daemon
+	for daemon in "${daemons[@]}"; do
 		[[ $1 = "${daemon#@}" ]] && return 1
 	done
 	return 0
