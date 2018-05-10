@@ -15,13 +15,13 @@ rc-sv stop timezone
 
 rc-sv stop cleanup
 
-if [[ $USELVM = [yY][eE][sS] && -x $(type -P lvm) && -d /sys/block ]];then
-
-    rc-sv stop lvm
-
-    [[ -f /etc/crypttab && -x $(type -p cryptsetup) ]] && \
-    rc-sv stop cryptsetup
-fi
+# if [[ $USELVM = [yY][eE][sS] && -x $(type -P lvm) && -d /sys/block ]];then
+#
+#     rc-sv stop lvm
+#
+#     [[ -f /etc/crypttab && -x $(type -p cryptsetup) ]] && \
+#     rc-sv stop cryptsetup
+# fi
 
 rc-sv stop udev
 

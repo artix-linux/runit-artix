@@ -16,7 +16,8 @@ RCLIBDIR = $(LIBDIR)/rc
 RCSVDIR = $(RCDIR)/sv.d
 RCRUNDIR = /run/rc-sv
 
-RCBIN = rc/rc-sv rc/rc-sysinit rc/rc-shutdown
+RCBIN = rc/rc-sv
+#rc/rc-sysinit rc/rc-shutdown
 
 RCSVD = \
 	rc/sv.d/api-fs \
@@ -24,15 +25,12 @@ RCSVD = \
 	rc/sv.d/bootlogd \
 	rc/sv.d/cleanup \
 	rc/sv.d/console-setup \
-	rc/sv.d/cryptsetup \
 	rc/sv.d/dmesg \
 	rc/sv.d/fsck \
 	rc/sv.d/hostname \
 	rc/sv.d/hwclock \
 	rc/sv.d/kill-all \
 	rc/sv.d/kmod-static-nodes \
-	rc/sv.d/lvm-monitoring \
-	rc/sv.d/lvm \
 	rc/sv.d/mount-all \
 	rc/sv.d/mount-ro \
 	rc/sv.d/net-lo \
@@ -46,6 +44,9 @@ RCSVD = \
 	rc/sv.d/tmpfiles-dev \
 	rc/sv.d/tmpfiles-setup \
 	rc/sv.d/udev
+# 	rc/sv.d/lvm-monitoring \
+# 	rc/sv.d/lvm \
+# 	rc/sv.d/cryptsetup
 
 TMPFILES = tmpfile.conf
 
@@ -53,7 +54,7 @@ BIN = zzz pause modules-load
 
 STAGES = 1 2 3 ctrlaltdel
 
-RC = rc/rc.local rc/rc.local.shutdown rc/rc.conf
+# RC = rc/rc.local rc/rc.local.shutdown rc/rc.conf
 RCFUNC = rc/functions
 
 LN = ln -sf
@@ -92,7 +93,7 @@ endif
 all-runit:
 		$(CC) $(CFLAGS) pause.c -o pause $(LDFLAGS)
 
-all-rc: $(RC) $(STAGES) $(RCBIN) $(RCSVD) $(RCFUNC)
+all-rc: $(STAGES) $(RCBIN) $(RCSVD) $(RCFUNC) #$(RC)
 
 install-runit:
 	install -d $(DESTDIR)$(RUNITDIR)
@@ -122,9 +123,9 @@ install-rc:
 	install -d $(DESTDIR)$(RUNITDIR)
 	install -m755 $(STAGES) $(DESTDIR)$(RUNITDIR)
 
-	install -d $(DESTDIR)$(RCDIR)
+# 	install -d $(DESTDIR)$(RCDIR)
 
-	install -m755 $(RC) $(DESTDIR)$(RCDIR)
+# 	install -m755 $(RC) $(DESTDIR)$(RCDIR)
 
 	install -d $(DESTDIR)$(RUNITDIR)
 	install -m755 $(STAGES) $(DESTDIR)$(RUNITDIR)
@@ -151,10 +152,10 @@ install: install-rc
 endif
 
 clean-runit:
-	-rm -f pause
+	-$(RM) pause
 
 clean-rc:
-	-rm -f $(RC) $(STAGES) $(RCBIN) $(RCSVD) $(RCFUNC)
+	-$(RM) $(STAGES) $(RCBIN) $(RCSVD) $(RCFUNC) #$(RC)
 
 clean: clean-runit
 ifeq ($(HASRC),yes)

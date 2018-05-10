@@ -1,6 +1,5 @@
 #!/bin/bash
 
-. @RCDIR@/rc.conf
 . @RCLIBDIR@/functions
 
 # print usage and exit
@@ -97,13 +96,13 @@ case $action in
 		for daemon in "${daemons[@]}"; do
 			# print running / stopped satus
 			if ! ck_daemon "$daemon"; then
-				s_status="${C_OTHER}[${C_DONE}STARTED${C_OTHER}]"
+				s_status="${C_OTHER}[${C_DONE}started${C_OTHER}]"
 			else
-				s_status="${C_OTHER}[${C_FAIL}STOPPED${C_OTHER}]"
+				s_status="${C_OTHER}[${C_FAIL}stopped${C_OTHER}]"
 			fi
 			# print auto / manual status
 			if ! ck_autostart "$daemon"; then
-				s_auto="${C_OTHER}[${C_DONE}AUTO${C_OTHER}]"
+				s_auto="${C_OTHER}[${C_DONE}auto${C_OTHER}]"
 			else
 				s_auto="${C_OTHER}[${C_FAIL}    ${C_OTHER}]"
 			fi
