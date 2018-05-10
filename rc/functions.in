@@ -155,13 +155,13 @@ have_daemon() {
 }
 
 # Check if $1 is started at boot
-# ck_autostart() {
-# 	local daemon
-# 	for daemon in "${DAEMONS[@]}"; do
-# 		[[ $1 = "${daemon#@}" ]] && return 1
-# 	done
-# 	return 0
-# }
+ck_autostart() {
+	local daemon
+	for daemon in "${DAEMONS[@]}"; do
+		[[ $1 = "${daemon#@}" ]] && return 1
+	done
+	return 0
+}
 
 start_daemon() {
 	have_daemon "$1" && @RCDIR@/sv.d/"$1" start
