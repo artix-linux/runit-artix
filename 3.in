@@ -15,14 +15,7 @@ fi
 
 print_leave
 
-RC_SHUTDOWN=(random-seed timezone cleanup udev kill-all swap api-fs mount-ro)
-
-for service in ${RC_SHUTDOWN[@]};do
-    case $service in
-        kill-all|mount-ro) rc-sv start $service ;;
-        *) rc-sv stop $service ;;
-    esac
-done
+run_shutdown
 
 if [ -e @RUNDIR@/reboot ]; then
     [[ -x $(type -P kexec) ]] && kexec -e &>/dev/null

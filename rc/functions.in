@@ -204,6 +204,28 @@ print_leave(){
     echo " "
 }
 
+run_sysinit(){
+    local rc_sysinit=(ls @RCDIR@/sysinit)
+
+    for service in ${rc_sysinit[@]};do
+        rc-sv start ${service#*-}
+        [[ "${service#*-}" == api-fs ]] && rc-sv start bootlogd
+        [[ "${service#*-}" == udev ]] && calc_columns
+    done
+    rc-sv stop bootlogd
+}
+
+run_shutdown(){
+    local rc_shutdown=(ls @RCDIR@/shutdown)
+
+    for service in ${rc_shutdown[@]};do
+        case ${service#*-} in
+            kill-all|mount-ro) rc-sv start ${service#*-} ;;
+            *) rc-sv stop ${service#*-} ;;
+        esac
+    done
+}
+
 # Filesystem functions
 # These can be overridden/reused for customizations like shutdown/loop-fsck.
 NETFS="nfs,nfs4,smbfs,cifs,codafs,ncpfs,shfs,fuse,fuseblk,glusterfs,davfs,fuse.glusterfs"

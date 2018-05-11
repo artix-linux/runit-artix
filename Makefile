@@ -124,7 +124,6 @@ install-rc:
 	install -m755 $(STAGES) $(DESTDIR)$(RUNITDIR)
 
 # 	install -d $(DESTDIR)$(RCDIR)
-
 # 	install -m755 $(RC) $(DESTDIR)$(RCDIR)
 
 	install -d $(DESTDIR)$(RUNITDIR)
@@ -138,6 +137,12 @@ install-rc:
 
 	install -d $(DESTDIR)$(RCSVDIR)
 	install -m755 $(RCSVD) $(DESTDIR)$(RCSVDIR)
+
+	install -d $(DESTDIR)$(RCDIR)/sysinit
+	$(CP) rc/sysinit $(DESTDIR)$(RCDIR)/
+
+	install -d $(DESTDIR)$(RCDIR)/shutdown
+	$(CP) rc/shutdown $(DESTDIR)$(RCDIR)/
 
 install-getty:
 	install -d $(DESTDIR)$(SVDIR)
