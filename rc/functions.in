@@ -205,7 +205,7 @@ print_leave(){
 }
 
 run_sysinit(){
-    local rc_sysinit=(ls @RCDIR@/sysinit)
+    local rc_sysinit=$(ls @RCDIR@/sysinit)
 
     for service in ${rc_sysinit[@]};do
         rc-sv start ${service#*-}
@@ -216,7 +216,7 @@ run_sysinit(){
 }
 
 run_shutdown(){
-    local rc_shutdown=(ls @RCDIR@/shutdown)
+    local rc_shutdown=$(ls @RCDIR@/shutdown)
 
     for service in ${rc_shutdown[@]};do
         case ${service#*-} in
