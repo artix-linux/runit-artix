@@ -236,7 +236,7 @@ print_leave(){
 run_sysinit(){
     for service in ${RC_SYSINIT[@]};do
         start_daemon "${service#*-}"
-        [[ "$service" == '01-api-fs' ]] && start_daemon bootlogd
+        [[ "${service#*-}" == 'api-fs' ]] && start_daemon bootlogd
     done
     stop_daemon bootlogd
 }
