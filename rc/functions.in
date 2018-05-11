@@ -167,18 +167,28 @@ ck_autostart() {
 enable_auto(){
     local sv=${daemon#*-}
     if have_daemon "$sv"; then
-        stat_busy "Enable $sv autostart"
-        ln -s @RCDIR@/sv.d/$sv @RCDIR@/sysinit/$daemon || stat_die
-        stat_done
+        if [[ ! -e @RCDIR@/sysinit/$daemon ]];then
+            stat_busy "Enable $sv autostart"
+            ln -s @RCDIR@/sv.d/$sv @RCDIR@/sysinit/$daemon || stat_die
+            stat_done
+        else
+            stat_busy "$sv is already autostarted"
+            stat_die
+        fi
     fi
 }
 
 disable_auto(){
     local sv=${daemon#*-}
     if have_daemon "$sv"; then
-        stat_busy "Disable $sv autostart"
-        rm @RCDIR@/sysinit/$daemon || stat_die
-        stat_done
+        if [[ ! -e @RCDIR@/sysinit/$daemon ]];then
+            stat_busy "Disable $sv autostart"
+            rm @RCDIR@/sysinit/$daemon || stat_die
+            stat_done
+        else
+            stat_busy "$sv is already not autostarted"
+            stat_die
+        fi
     fi
 }
 
@@ -234,10 +244,7 @@ run_sysinit(){
 
 run_shutdown(){
     for service in ${RC_SHUTDOWN[@]};do
-        case ${service#*-} in
-            kill-all|mount-ro) rc-sv start ${service#*-} ;;
-            *) rc-sv stop ${service#*-} ;;
-        esac
+        rc-sv stop ${service#*-}
     done
 }
 

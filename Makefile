@@ -26,17 +26,15 @@ RCSVD = \
 	rc/sv.d/cleanup \
 	rc/sv.d/console-setup \
 	rc/sv.d/dmesg \
-	rc/sv.d/fsck \
 	rc/sv.d/hostname \
 	rc/sv.d/hwclock \
-	rc/sv.d/kill-all \
 	rc/sv.d/kmod-static-nodes \
+	rc/sv.d/misc \
 	rc/sv.d/mount-all \
-	rc/sv.d/mount-ro \
 	rc/sv.d/net-lo \
 	rc/sv.d/netfs \
 	rc/sv.d/random-seed \
-	rc/sv.d/remount-rw \
+	rc/sv.d/remount-root \
 	rc/sv.d/swap \
 	rc/sv.d/sysctl \
 	rc/sv.d/sysusers \
@@ -44,6 +42,7 @@ RCSVD = \
 	rc/sv.d/tmpfiles-dev \
 	rc/sv.d/tmpfiles-setup \
 	rc/sv.d/udev
+
 # 	rc/sv.d/lvm-monitoring \
 # 	rc/sv.d/lvm \
 # 	rc/sv.d/cryptsetup

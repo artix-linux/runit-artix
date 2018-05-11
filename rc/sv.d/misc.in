@@ -13,11 +13,19 @@ case "$1" in
             declare -r fsckret=0
         fi
         fsck_reboot $fsckret
-        add_daemon fsck
+        add_daemon misc
+        stat_done
+        ;;
+    stop)
+        stat_busy "Running kill-all"
+        pkill --inverse -s0,1 -TERM
+        sleep 1
+        pkill --inverse -s0,1 -KILL
+        rm_daemon misc
         stat_done
         ;;
     *)
-        echo "usage: $0 {start}"
+        echo "usage: $0 {start|stop}"
         exit 1
         ;;
 esac
