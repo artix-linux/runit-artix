@@ -23,6 +23,8 @@ e.g: $name list
      $name list --started hwclock
      $name start hwclock
      $name help
+     $name enable 98-custom
+     $name disable 98-custom
 EOF
 	exit ${1:-1}
 }
@@ -109,6 +111,8 @@ case $action in
 			printf "$s_status$s_auto${C_CLEAR} $daemon\n"
 		done
 	;;
+	enable) enable_auto ;;
+	disable) disable_auto ;;
 	*)
 		# other actions need an explicit daemons list
 		[[ -z $daemons ]] && usage
