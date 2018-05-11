@@ -157,7 +157,7 @@ have_daemon() {
 # Check if $1 is started at boot
 ck_autostart() {
 	local daemon
-	for daemon in "${SYSINIT[@]}"; do
+	for daemon in "${RC_SYSINIT[@]}"; do
 		[[ $1 = "${daemon#@}" ]] && return 1
 	done
 	return 0
@@ -205,9 +205,9 @@ print_leave(){
 }
 
 run_sysinit(){
-    local rc_sysinit=$(ls @RCDIR@/sysinit)
+    RC_SYSINIT=$(ls @RCDIR@/sysinit)
 
-    for service in ${rc_sysinit[@]};do
+    for service in ${RC_SYSINIT[@]};do
         rc-sv start ${service#*-}
         [[ "${service#*-}" == api-fs ]] && rc-sv start bootlogd
         [[ "${service#*-}" == udev ]] && calc_columns
@@ -216,9 +216,9 @@ run_sysinit(){
 }
 
 run_shutdown(){
-    local rc_shutdown=$(ls @RCDIR@/shutdown)
+    RC_SHUTDOWN=$(ls @RCDIR@/shutdown)
 
-    for service in ${rc_shutdown[@]};do
+    for service in ${RC_SHUTDOWN[@]};do
         case ${service#*-} in
             kill-all|mount-ro) rc-sv start ${service#*-} ;;
             *) rc-sv stop ${service#*-} ;;
