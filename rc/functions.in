@@ -235,16 +235,16 @@ print_leave(){
 
 run_sysinit(){
     for service in ${RC_SYSINIT[@]};do
-        rc-sv start ${service#*-}
-        [[ "${service#*-}" == api-fs ]] && rc-sv start bootlogd
+        start_daemon "${service#*-}"
+        [[ "${service#*-}" == api-fs ]] && start_daemon bootlogd
         [[ "${service#*-}" == udev ]] && calc_columns
     done
-    rc-sv stop bootlogd
+    stop_daemon bootlogd
 }
 
 run_shutdown(){
     for service in ${RC_SHUTDOWN[@]};do
-        rc-sv stop ${service#*-}
+        stop_daemon "${service#*-}"
     done
 }
 
