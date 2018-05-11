@@ -1,69 +1,20 @@
 #!/bin/bash
 
 . @RCLIBDIR@/functions
-. @RCDIR@/rc.conf
+
+RC_SYSINIT=(api-fs hostname hwclock kmod-static-nodes tmpfiles-dev udev
+        console-setup net-lo fsck remount-rw mount-all swap timezone
+        random-seed tmpfiles-setup sysusers dmesg sysctl binfmt cleanup)
 
 # Prints distro name and URL
 print_welcome
 
 calc_columns
 
-# run rc-sv
-rc-sv start api-fs
-
-rc-sv start bootlogd
-
-rc-sv start hostname
-
-rc-sv start hwclock
-
-rc-sv start kmod-static-nodes
-
-rc-sv start tmpfiles-dev
-
-rc-sv start udev
-
-calc_columns
-
-rc-sv start console-setup
-
-rc-sv start net-lo
-
-# if [[ $USELVM = [yY][eE][sS] && -x $(type -P lvm) && -d /sys/block ]];then
-#
-#     rc-sv start lvm
-#
-#     rc-sv start lvm-monitoring
-#
-#     [[ -f /etc/crypttab && -x $(type -p cryptsetup) ]] && \
-#     rc-sv start cryptsetup
-# fi
-
-rc-sv start fsck
-
-rc-sv start remount-rw
-
-rc-sv start mount-all
-
-rc-sv start swap
-
-rc-sv start timezone
-
-rc-sv start random-seed
-
-rc-sv start tmpfiles-setup
-
-rc-sv start sysusers
-
-rc-sv start dmesg
-
-rc-sv start sysctl
-
-rc-sv start binfmt
-
-rc-sv start cleanup
+for service in ${RC_SYSINIT[@]};do
+    rc-sv start $service
+    [[ "$service" == api-fs ]] && rc-sv start bootlogd
+    [[ "$service" == udev ]] && calc_columns
+done
 
 rc-sv stop bootlogd
-
-[[ -x @RCDIR@/rc.local ]] && @RCDIR@/rc.local
-

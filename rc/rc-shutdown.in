@@ -1,34 +1,18 @@
 #!/bin/bash
 
 . @RCLIBDIR@/functions
-. @RCDIR@/rc.conf
 
 print_leave
 
-[[ -x @RCDIR@/rc.local.shutdown ]] && @RCDIR@/rc.local.shutdown
+# [[ -x @RCDIR@/rc.local.shutdown ]] && @RCDIR@/rc.local.shutdown
 
-# run rc-sv
+print_leave
 
-rc-sv stop random-seed
+RC_SHUTDOWN=(random-seed timezone cleanup udev kill-all swap api-fs mount-ro)
 
-rc-sv stop timezone
-
-rc-sv stop cleanup
-
-# if [[ $USELVM = [yY][eE][sS] && -x $(type -P lvm) && -d /sys/block ]];then
-#
-#     rc-sv stop lvm
-#
-#     [[ -f /etc/crypttab && -x $(type -p cryptsetup) ]] && \
-#     rc-sv stop cryptsetup
-# fi
-
-rc-sv stop udev
-
-rc-sv start kill-all
-
-rc-sv stop swap
-
-rc-sv stop api-fs
-
-rc-sv start mount-ro
+for service in ${RC_SHUTDOWN[@]};do
+    case $service in
+        kill-all|mount-ro) rc-sv start $service ;;
+        *) rc-sv stop $service ;;
+    esac
+done

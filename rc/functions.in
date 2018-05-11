@@ -287,11 +287,3 @@ fi
 
 PREFIX_REG="::"
 PREFIX_HL=" >"
-
-# stage 1
-SYSINIT=(api-fs hostname hwclock kmod-static-nodes tmpfiles-dev udev
-        console-setup net-lo fsck remount-rw mount-all swap timezone
-        random-seed tmpfiles-setup sysusers dmesg sysctl binfmt cleanup)
-
-# stage 3
-SHUTDOWN=(random-seed timezone cleanup udev kill-all swap api-fs mount-ro)
