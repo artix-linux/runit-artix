@@ -57,7 +57,7 @@ STAGES = 1 2 3 ctrlaltdel
 RC = rc/rc.conf
 #rc/rc.local rc/rc.local.shutdown
 
-RCFUNC = rc/functions rc/cgroup-release-agent.sh
+RCFUNC = rc/functions rc/cgroup-release-agent
 
 LN = ln -sf
 CP = cp -R --no-dereference --preserve=mode,links -v
@@ -135,7 +135,7 @@ install-rc:
 	install -m755 $(RCBIN) $(DESTDIR)$(BINDIR)
 
 	install -d $(DESTDIR)$(RCLIBDIR)
-	install -m644 $(RCFUNC) $(DESTDIR)$(RCLIBDIR)
+	install -m755 $(RCFUNC) $(DESTDIR)$(RCLIBDIR)
 
 	install -d $(DESTDIR)$(RCSVDIR)
 	install -m755 $(RCSVD) $(DESTDIR)$(RCSVDIR)
