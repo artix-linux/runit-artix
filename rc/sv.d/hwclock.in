@@ -3,6 +3,7 @@
 . @RCLIBDIR@/functions
 
 HWCLOCK_PARAMS="--systz"
+HARDWARECLOCK=${HARDWARECLOCK:-'UTC'}
 
 [[ -f /etc/adjtime ]] && { read ; read ; read ADJTIME; } < /etc/adjtime
 
