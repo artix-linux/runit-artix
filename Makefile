@@ -11,60 +11,11 @@ RUNSVDIR = $(RUNITDIR)/runsvdir
 SERVICEDIR = /etc/service
 RUNDIR = /run/runit
 
-RCDIR = $(SYSCONFDIR)/rc
 RCLIBDIR = $(LIBDIR)/rc
-RCSVDIR = $(RCDIR)/sv.d
-RCRUNDIR = /run/rc-sv
-
-RCBIN = rc/rc-sv
-#rc/rc-sysinit rc/rc-shutdown
-
-RCSVD = \
-	rc/sv.d/root \
-	rc/sv.d/binfmt \
-	rc/sv.d/bootlogd \
-	rc/sv.d/cleanup \
-	rc/sv.d/console-setup \
-	rc/sv.d/dmesg \
-	rc/sv.d/hostname \
-	rc/sv.d/hwclock \
-	rc/sv.d/kmod-static-nodes \
-	rc/sv.d/misc \
-	rc/sv.d/mount-all \
-	rc/sv.d/net-lo \
-	rc/sv.d/netfs \
-	rc/sv.d/random-seed \
-	rc/sv.d/remount-root \
-	rc/sv.d/swap \
-	rc/sv.d/sysctl \
-	rc/sv.d/sysusers \
-	rc/sv.d/tmpfiles-dev \
-	rc/sv.d/tmpfiles-setup \
-	rc/sv.d/udev \
-	rc/sv.d/udev-trigger \
-	rc/sv.d/udev-settle \
-	rc/sv.d/modules \
-	rc/sv.d/sysfs \
-	rc/sv.d/devfs \
-	rc/sv.d/procfs \
-	rc/sv.d/cgroups
-
-# 	rc/sv.d/timezone \
-# 	rc/sv.d/lvm-monitoring \
-# 	rc/sv.d/lvm \
-# 	rc/sv.d/cryptsetup
-
 
 TMPFILES = tmpfile.conf
-
-BIN = zzz pause modules-load
-
+BIN = zzz pause
 STAGES = 1 2 3 ctrlaltdel
-
-RC = rc/rc.conf
-#rc/rc.local rc/rc.local.shutdown
-
-RCFUNC = rc/functions rc/cgroup-release-agent
 
 LN = ln -sf
 CP = cp -R --no-dereference --preserve=mode,links -v
@@ -74,16 +25,12 @@ M4 = m4 -P
 CHMODAW = chmod a-w
 CHMODX = chmod +x
 
-HASRC = yes
-
 EDIT = sed \
 	-e "s|@RUNITDIR[@]|$(RUNITDIR)|g" \
 	-e "s|@SERVICEDIR[@]|$(SERVICEDIR)|g" \
 	-e "s|@RUNSVDIR[@]|$(RUNSVDIR)|g" \
 	-e "s|@RUNDIR[@]|$(RUNDIR)|g" \
-	-e "s|@RCDIR[@]|$(RCDIR)|g" \
-	-e "s|@RCLIBDIR[@]|$(RCLIBDIR)|g" \
-	-e "s|@RCRUNDIR[@]|$(RCRUNDIR)|g"
+	-e "s|@RCLIBDIR[@]|$(RCLIBDIR)|g"
 
 %: %.in Makefile
 	@echo "GEN $@"
@@ -95,14 +42,9 @@ EDIT = sed \
 
 
 all: all-runit
-ifeq ($(HASRC),yes)
-all: all-rc
-endif
 
-all-runit:
+all-runit: $(STAGES)
 		$(CC) $(CFLAGS) pause.c -o pause $(LDFLAGS)
-
-all-rc: $(STAGES) $(RCBIN) $(RCSVD) $(RCFUNC) $(RC)
 
 install-runit:
 	install -d $(DESTDIR)$(RUNITDIR)
@@ -126,32 +68,9 @@ install-runit:
 	install -m644 pause.1 $(DESTDIR)$(MANDIR)/man1
 	install -d $(DESTDIR)$(MANDIR)/man8
 	install -m644 zzz.8 $(DESTDIR)$(MANDIR)/man8/zzz.8
-	install -m644 modules-load.8 $(DESTDIR)$(MANDIR)/man8
-
-install-rc:
-	install -d $(DESTDIR)$(RUNITDIR)
-	install -m755 $(STAGES) $(DESTDIR)$(RUNITDIR)
-
-	install -d $(DESTDIR)$(RCDIR)
-	install -m755 $(RC) $(DESTDIR)$(RCDIR)
 
 	install -d $(DESTDIR)$(RUNITDIR)
 	install -m755 $(STAGES) $(DESTDIR)$(RUNITDIR)
-
-	install -d $(DESTDIR)$(BINDIR)
-	install -m755 $(RCBIN) $(DESTDIR)$(BINDIR)
-
-	install -d $(DESTDIR)$(RCLIBDIR)
-	install -m755 $(RCFUNC) $(DESTDIR)$(RCLIBDIR)
-
-	install -d $(DESTDIR)$(RCSVDIR)
-	install -m755 $(RCSVD) $(DESTDIR)$(RCSVDIR)
-
-	install -d $(DESTDIR)$(RCDIR)/sysinit
-	$(CP) rc/sysinit $(DESTDIR)$(RCDIR)/
-
-	install -d $(DESTDIR)$(RCDIR)/shutdown
-	$(CP) rc/shutdown $(DESTDIR)$(RCDIR)/
 
 install-getty:
 	install -d $(DESTDIR)$(SVDIR)
@@ -161,21 +80,10 @@ install-getty:
 	$(CP) runsvdir/default $(DESTDIR)$(RUNSVDIR)/
 
 install: install-runit
-ifeq ($(HASRC),yes)
-install: install-rc
-endif
 
 clean-runit:
-	-$(RM) pause
-
-clean-rc:
-	-$(RM) $(STAGES) $(RCBIN) $(RCSVD) $(RCFUNC) $(RC)
+	-$(RM) pause $(STAGES)
 
 clean: clean-runit
-ifeq ($(HASRC),yes)
-clean: clean-rc
-endif
 
-clean:
-
-.PHONY: all install clean install-runit install-rc install-getty clean-runit clean-rc all-runit all-rc
+.PHONY: all install clean install-runit install-getty clean-runit
