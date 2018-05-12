@@ -238,7 +238,7 @@ run_sysinit(){
     print_welcome
     calc_columns
 
-    for service in "${RC_SYSINIT[@]}";do
+    for service in ${RC_SYSINIT[@]};do
         start_daemon "${service#*-}"
     done
 }
@@ -246,7 +246,7 @@ run_sysinit(){
 run_shutdown(){
     print_leave
 
-    for service in "${RC_SHUTDOWN[@]}";do
+    for service in ${RC_SHUTDOWN[@]};do
         stop_daemon "${service#*-}"
     done
 }
