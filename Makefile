@@ -79,7 +79,7 @@ install-getty:
 	install -d $(DESTDIR)$(RUNSVDIR)/default
 	$(CP) runsvdir/default $(DESTDIR)$(RUNSVDIR)/
 
-install: install-runit
+install: install-runit install-getty
 
 clean-runit:
 	-$(RM) pause $(STAGES)
