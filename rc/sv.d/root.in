@@ -4,7 +4,6 @@
 . @RCLIBDIR@/functions
 
 mount_fs(){
-    mountpoint -q /run || mount -t tmpfs run /run -o mode=0755,nosuid,nodev
     findmnt / --options ro &>/dev/null || mount -o remount,ro /
 }
 

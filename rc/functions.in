@@ -241,7 +241,6 @@ run_sysinit(){
     for service in "${RC_SYSINIT[@]}";do
         start_daemon "${service#*-}"
     done
-    stop_daemon bootlogd
 }
 
 run_shutdown(){

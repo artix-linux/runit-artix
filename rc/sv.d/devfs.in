@@ -8,6 +8,7 @@ mount_devfs(){
     mkdir -p /dev/{pts,shm}
     mountpoint -q /dev/pts || mount -t devpts devpts /dev/pts -o mode=0620,gid=5,nosuid,noexec
     mountpoint -q /dev/shm || mount -t tmpfs shm /dev/shm -o mode=1777,nosuid,nodev
+    mountpoint -q /run || mount -t tmpfs run /run -o mode=0755,nosuid,nodev
 }
 
 case "$1" in

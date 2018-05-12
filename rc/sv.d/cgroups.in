@@ -36,7 +36,7 @@ cgroup1_base(){
 }
 
 cgroup1_controllers(){
-    "${HAVE_CONTROLLER1}" && [ -e /proc/cgroups ]  &&grep -qw cgroup /proc/filesystems || return 0
+    "${HAVE_CONTROLLER1}" && [ -e /proc/cgroups ]  && grep -qw cgroup /proc/filesystems || return 0
     while read -r name _ _ enabled _; do
         case "${enabled}" in
             1)	if mountpoint -q "/sys/fs/cgroup/${name}";then continue;fi

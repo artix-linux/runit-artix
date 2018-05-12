@@ -3,19 +3,27 @@
 # sourcing our current rc.conf requires this to be a bash script
 . @RCLIBDIR@/functions
 
+start_bootlogd(){
+    bootlogd -p /run/bootlogd.pid -l /var/log/boot.log
+}
+
+stop_bootlogd(){
+    [[ -f /run/bootlogd.pid ]] || return 0
+    touch /var/log/boot.log
+    kill $(< /run/bootlogd.pid)
+    rm -f /run/bootlogd.pid
+}
+
 case "$1" in
     start)
         stat_busy "Starting bootlogd"
-        bootlogd -p /run/bootlogd.pid -l /var/log/boot.log
+        start_bootlogd
         add_daemon bootlogd
         stat_done
         ;;
     stop)
         stat_busy "Stopping bootlogd"
-        [[ -f /run/bootlogd.pid ]] || return 0
-        touch /var/log/boot.log
-        kill $(< /run/bootlogd.pid)
-        rm -f /run/bootlogd.pid
+        stop_bootlogd
         rm_daemon bootlogd
         stat_done
         ;;
