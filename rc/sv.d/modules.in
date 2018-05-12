@@ -19,6 +19,7 @@ case "$1" in
         add_daemon modules
         stat_done
         ;;
+    *)
         echo "usage: $0 {start}"
         exit 1
         ;;

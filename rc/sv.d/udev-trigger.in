@@ -6,8 +6,8 @@
 case "$1" in
     start)
         stat_busy "Triggering udev uevents"
-        udevadm trigger --action=add --type=subsystems || stat_die
-        udevadm trigger --action=add --type=devices || stat_die
+        udevadm trigger --action=add --type=subsystems
+        udevadm trigger --action=add --type=devices
 
         add_daemon udev-trigger
         stat_done
