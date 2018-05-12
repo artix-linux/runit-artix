@@ -5,9 +5,9 @@
 . @RCDIR@/rc.conf
 
 CGROUP_OPTS=nodev,noexec,nosuid
-HAVE_CONTROLLER1=${HAVE_CONTROLLER1:-'true'}
-CGROUP_MODE=${CGROUP_MODE:-'hybrid'}
-# CGROUP_CONTROLLERS=""
+HAVE_CONTROLLER1=${HAVE_CONTROLLER1:-true}
+CGROUP_MODE=${CGROUP_MODE:-hybrid}
+CGROUP_CONTROLLERS=""
 
 cgroup2_find_path(){
     if grep -qw cgroup2 /proc/filesystems; then
@@ -109,14 +109,14 @@ mount_cgroups(){
     return 0
 }
 
-mount_cgroups(){
+mount_cgs(){
     [[ -d /sys/fs/cgroup ]] && mount_cgroups
 }
 
 case "$1" in
     start)
         stat_busy "Mounting cgroups filesystem"
-        mount_cgroups
+        mount_cgs
         add_daemon cgroups
         stat_done
         ;;
