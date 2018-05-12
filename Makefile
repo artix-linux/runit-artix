@@ -41,6 +41,9 @@ RCSVD = \
 	rc/sv.d/tmpfiles-dev \
 	rc/sv.d/tmpfiles-setup \
 	rc/sv.d/udev \
+	rc/sv.d/udev-trigger \
+	rc/sv.d/udev-settle \
+	rc/sv.d/modules \
 	rc/sv.d/sysfs \
 	rc/sv.d/devfs \
 	rc/sv.d/procfs \
