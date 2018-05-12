@@ -181,7 +181,7 @@ enable_auto(){
 disable_auto(){
     local sv=${daemon#*-}
     if have_daemon "$sv"; then
-        if [[ ! -e @RCDIR@/sysinit/$daemon ]];then
+        if [[ -e @RCDIR@/sysinit/$daemon ]];then
             stat_busy "Disable $sv autostart"
             rm @RCDIR@/sysinit/$daemon || stat_die
             stat_done
@@ -238,7 +238,7 @@ run_sysinit(){
     print_welcome
     calc_columns
 
-    for service in ${RC_SYSINIT[@]};do
+    for service in "${RC_SYSINIT[@]}";do
         start_daemon "${service#*-}"
     done
     stop_daemon bootlogd
@@ -246,7 +246,8 @@ run_sysinit(){
 
 run_shutdown(){
     print_leave
-    for service in ${RC_SHUTDOWN[@]};do
+
+    for service in "${RC_SHUTDOWN[@]}";do
         stop_daemon "${service#*-}"
     done
 }

@@ -27,7 +27,7 @@ cgroup1_base(){
     fi
 
     if ! mountpoint -q /sys/fs/cgroup/openrc; then
-        local agent="@RCLIBDIR@/cgroup-release-agent.sh"
+        local agent="@RCLIBDIR@/cgroup-release-agent"
         mkdir /sys/fs/cgroup/openrc
         mount -n -t cgroup -o none,${CGROUP_OPTS},name=openrc,release_agent="$agent" openrc /sys/fs/cgroup/openrc
         printf 1 > /sys/fs/cgroup/openrc/notify_on_release
