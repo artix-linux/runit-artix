@@ -1,12 +1,9 @@
 # @RCDIR@/rc.conf - system configuration
 
-# Storage
-#
-# Enable dmraid support (yes/no)
-# USEDMRAID="no"
+# HARDWARECLOCK='UTC'
 
-# Enable LVM2 support (yes/no)
-# USELVM="no"
+# CGROUP_MODE="hybrid"
 
-# Enable btrfs support (yes/no)
-# USEBTRFS="no"
+# CGROUP_CONTROLLERS=""
+
+# HAVE_CONTROLLER1="yes"

@@ -38,14 +38,15 @@ RCSVD = \
 	rc/sv.d/swap \
 	rc/sv.d/sysctl \
 	rc/sv.d/sysusers \
-	rc/sv.d/timezone \
 	rc/sv.d/tmpfiles-dev \
 	rc/sv.d/tmpfiles-setup \
 	rc/sv.d/udev
 
+# 	rc/sv.d/timezone \
 # 	rc/sv.d/lvm-monitoring \
 # 	rc/sv.d/lvm \
 # 	rc/sv.d/cryptsetup
+
 
 TMPFILES = tmpfile.conf
 
@@ -53,8 +54,10 @@ BIN = zzz pause modules-load
 
 STAGES = 1 2 3 ctrlaltdel
 
-# RC = rc/rc.local rc/rc.local.shutdown rc/rc.conf
-RCFUNC = rc/functions
+RC = rc/rc.conf
+#rc/rc.local rc/rc.local.shutdown
+
+RCFUNC = rc/functions rc/cgroup-release-agent.sh
 
 LN = ln -sf
 CP = cp -R --no-dereference --preserve=mode,links -v
@@ -92,7 +95,7 @@ endif
 all-runit:
 		$(CC) $(CFLAGS) pause.c -o pause $(LDFLAGS)
 
-all-rc: $(STAGES) $(RCBIN) $(RCSVD) $(RCFUNC) #$(RC)
+all-rc: $(STAGES) $(RCBIN) $(RCSVD) $(RCFUNC) $(RC)
 
 install-runit:
 	install -d $(DESTDIR)$(RUNITDIR)
@@ -122,8 +125,8 @@ install-rc:
 	install -d $(DESTDIR)$(RUNITDIR)
 	install -m755 $(STAGES) $(DESTDIR)$(RUNITDIR)
 
-# 	install -d $(DESTDIR)$(RCDIR)
-# 	install -m755 $(RC) $(DESTDIR)$(RCDIR)
+	install -d $(DESTDIR)$(RCDIR)
+	install -m755 $(RC) $(DESTDIR)$(RCDIR)
 
 	install -d $(DESTDIR)$(RUNITDIR)
 	install -m755 $(STAGES) $(DESTDIR)$(RUNITDIR)
@@ -159,7 +162,7 @@ clean-runit:
 	-$(RM) pause
 
 clean-rc:
-	-$(RM) $(STAGES) $(RCBIN) $(RCSVD) $(RCFUNC) #$(RC)
+	-$(RM) $(STAGES) $(RCBIN) $(RCSVD) $(RCFUNC) $(RC)
 
 clean: clean-runit
 ifeq ($(HASRC),yes)
