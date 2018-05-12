@@ -20,7 +20,7 @@ RCBIN = rc/rc-sv
 #rc/rc-sysinit rc/rc-shutdown
 
 RCSVD = \
-	rc/sv.d/api-fs \
+	rc/sv.d/root \
 	rc/sv.d/binfmt \
 	rc/sv.d/bootlogd \
 	rc/sv.d/cleanup \
@@ -40,7 +40,11 @@ RCSVD = \
 	rc/sv.d/sysusers \
 	rc/sv.d/tmpfiles-dev \
 	rc/sv.d/tmpfiles-setup \
-	rc/sv.d/udev
+	rc/sv.d/udev \
+	rc/sv.d/sysfs \
+	rc/sv.d/devfs \
+	rc/sv.d/procfs \
+	rc/sv.d/cgroups
 
 # 	rc/sv.d/timezone \
 # 	rc/sv.d/lvm-monitoring \
