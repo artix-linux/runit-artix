@@ -7,7 +7,7 @@ do_unlock_device() {
 	# $2 = source device
 	# $3 = password
 	# $4 = options
-	local open=create a=$1 b=$2 failed=0
+	local open=create a=$1 b=$2 failed=0 opts
 	# Ordering of options is different if you are using LUKS vs. not.
 	# Use ugly swizzling to deal with it.
 	# isLuks only gives an exit code but no output to stdout or stderr.
@@ -16,31 +16,21 @@ do_unlock_device() {
 		a=$2
 		b=$1
 	fi
+	if [[ $4 ]]; then
+		for i in ${4//,/ }; do
+			case $i in
+				"discard") opts+="--allow-discard" ;;
+				"readonly"|"read-only") opts+="--readonly" ;;
+				"tries"*) opts+="-T ${i##*=}" ;;
+				# For now the swap lines are commented because
+				# there are LUKS-only option and plain (create)-only
+				# option.
+				# "swap") mkswap="y" ;;
+				# "cipher"*) opts+="-c ${i##*=}" ;;
+			esac
+		done
+	fi
 	case $3 in
-		SWAP)
-			local _overwriteokay=0
-			if [[ -b $2 && -r $2 ]]; then
-				# This is DANGEROUS! If there is any known file system,
-				# partition table, RAID, or LVM volume on the device,
-				# we don't overwrite it.
-				#
-				# 'blkid' returns 2 if no valid signature has been found.
-				# Only in this case should we allow overwriting the device.
-				#
-				# This sanity check _should_ be sufficient, but it might not.
-				# This may cause data loss if it is not used carefully.
-				blkid -p "$2" &>/dev/null
-				(( $? == 2 )) && _overwriteokay=1
-			fi
-			if (( _overwriteokay == 0 )); then
-				false
-			elif cryptsetup -d /dev/urandom $4 $open "$a" "$b" >/dev/null; then
-				printf "creating swapspace..\n"
-				mkswap -f -L $1 /dev/mapper/$1 >/dev/null
-			fi;;
-		ASK)
-			printf "\nOpening '$1' volume:\n"
-			cryptsetup $4 $open "$a" "$b" < /dev/console;;
 		/dev*)
 			local ckdev=${3%%:*}
 			local cka=${3#*:}
@@ -62,13 +52,13 @@ do_unlock_device() {
 					# cka is numeric: cka=offset, ckb=length
 					dd if=${ckdev} of=${ckfile} bs=1 skip=${cka} count=${ckb} >/dev/null 2>&1;;
 			esac
-			cryptsetup -d ${ckfile} $4 $open "$a" "$b" >/dev/null
+			cryptsetup -d ${ckfile} $opts $open "$a" "$b" >/dev/null
 			dd if=/dev/urandom of=${ckfile} bs=1 count=$(stat -c %s ${ckfile}) conv=notrunc >/dev/null 2>&1
 			rm ${ckfile};;
 		/*)
-			cryptsetup -d "$3" $4 $open "$a" "$b" >/dev/null;;
-		*)
-			echo "$3" | cryptsetup $4 $open "$a" "$b" >/dev/null;;
+			cryptsetup -d "$3" $opts $open "$a" "$b" >/dev/null;;
+		"none" | "")
+			cryptsetup $opts $open "$a" "$b" >/dev/null;;
 	esac
 	return $?
 }
