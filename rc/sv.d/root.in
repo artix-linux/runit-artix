@@ -3,26 +3,26 @@
 # sourcing our current rc.conf requires this to be a bash script
 . @RCLIBDIR@/functions
 
-mount_api_fs(){
+mount_fs(){
     mountpoint -q /run || mount -t tmpfs run /run -o mode=0755,nosuid,nodev
     findmnt / --options ro &>/dev/null || mount -o remount,ro /
 }
 
-umount_api_fs(){
+umount_fs(){
     umount -r -a -t nosysfs,noproc,nodevtmpfs,notmpfs
 }
 
 case "$1" in
     start)
-        stat_busy "Mounting api filesystems"
-        mount_api_fs
-        add_daemon api-fs
+        stat_busy "Mounting filesystems"
+        mount_fs
+        add_daemon root
         stat_done
         ;;
     stop)
-        stat_busy "Unounting api filesystems"
-        umount_api_fs
-        rm_daemon api-fs
+        stat_busy "Unounting filesystems"
+        umount_fs
+        rm_daemon root
         stat_done
         ;;
     *)
