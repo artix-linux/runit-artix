@@ -164,6 +164,46 @@ ck_autostart() {
 	return 0
 }
 
+ck_failed() {
+	[[ ! -f @RCRUNDIR@/failed/$1 ]]
+}
+
+add_failed() {
+	[[ -d @RCRUNDIR@/failed ]] || mkdir -p @RCRUNDIR@/failed
+	>| @RCRUNDIR@/failed/"$1"
+}
+
+rm_failed() {
+	rm -f @RCRUNDIR@/failed/"$1"
+}
+
+check_root() {
+    (( EUID == 0 )) && return
+    if type -P sudo >/dev/null; then
+        exec sudo -- "${orig_argv[@]}"
+    else
+        exec su root -c "$(printf ' %q' "${orig_argv[@]}")"
+    fi
+}
+
+ck_sysinit(){
+    local daemon
+	for daemon in ${RC_SYSINIT[@]}; do
+        local sv=${daemon#*-}
+		[[ $1 = "${sv#@}" ]] && return 1
+	done
+	return 0
+}
+
+ck_shutdown(){
+    local daemon
+	for daemon in ${RC_SHUTDOWN[@]}; do
+        local sv=${daemon#*-}
+		[[ $1 = "${sv#@}" ]] && return 1
+	done
+	return 0
+}
+
 enable_auto(){
     local sv=${daemon#*-}
     if have_daemon "$sv"; then
@@ -306,15 +346,16 @@ fsck_reboot() {
 # set colors
 if [[ $USECOLOR != [nN][oO] ]]; then
 	if tput setaf 0 &>/dev/null; then
-		C_CLEAR=$(tput sgr0)                      # clear text
+		C_CLEAR=$(tput sgr0)                 # clear text
 		C_MAIN=${C_CLEAR}$(tput bold)        # main text
 		C_OTHER=${C_MAIN}$(tput setaf 4)     # prefix & brackets
 		C_SEPARATOR=${C_MAIN}$(tput setaf 0) # separator
 		C_BUSY=${C_CLEAR}$(tput setaf 6)     # busy
 		C_FAIL=${C_MAIN}$(tput setaf 1)      # failed
-		C_DONE=${C_MAIN}                          # completed
+		C_DONE=${C_MAIN}                     # completed
 		C_BKGD=${C_MAIN}$(tput setaf 5)      # backgrounded
-		C_H1=${C_MAIN}                            # highlight text 1
+		C_STARTED=${C_MAIN}$(tput setaf 2)   # started
+		C_H1=${C_MAIN}                       # highlight text 1
 		C_H2=${C_MAIN}$(tput setaf 6)        # highlight text 2
 	else
 		C_CLEAR="\e[m"          # clear text
@@ -325,6 +366,7 @@ if [[ $USECOLOR != [nN][oO] ]]; then
 		C_FAIL="\e[1;31m"       # failed
 		C_DONE=${C_MAIN}        # completed
 		C_BKGD="\e[1;35m"       # backgrounded
+		C_STARTED="\e[1;32m"    # started
 		C_H1=${C_MAIN}          # highlight text 1
 		C_H2="\e[1;36m"         # highlight text 2
 	fi

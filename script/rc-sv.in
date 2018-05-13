@@ -62,6 +62,8 @@ declare -A filter=([started]=0 [stopped]=0 [auto]=0 [noauto]=0)
 argv=$(getopt -l 'started,stopped,auto,noauto' -- 'sSaA' "$@") || usage
 eval set -- "$argv"
 
+orig_argv=("$0" "$@")
+
 # create an initial daemon list
 while [[ "$1" != -- ]]; do
 	case "$1" in
@@ -95,10 +97,10 @@ case $action in
 		# list take all daemons by default
 		[[ -z $daemons ]] && for d in *; do have_daemon "$d" && daemons+=("$d"); done
 		filter_daemons
-		for daemon in "${daemons[@]}"; do
+        for daemon in "${daemons[@]}"; do
 			# print running / stopped satus
 			if ! ck_daemon "$daemon"; then
-				s_status="${C_OTHER}[${C_DONE}started${C_OTHER}]"
+				s_status="${C_OTHER}[${C_STARTED}started${C_OTHER}]"
 			else
 				s_status="${C_OTHER}[${C_FAIL}stopped${C_OTHER}]"
 			fi
@@ -106,14 +108,27 @@ case $action in
 			if ! ck_autostart "$daemon"; then
 				s_auto="${C_OTHER}[${C_DONE}auto${C_OTHER}]"
 			else
-				s_auto="${C_OTHER}[${C_FAIL}    ${C_OTHER}]"
+				s_auto="${C_OTHER}[${C_DONE}    ${C_OTHER}]"
 			fi
-			printf "$s_status$s_auto${C_CLEAR} $daemon\n"
+			# print sysinit
+			if ! ck_sysinit "$daemon"; then
+				s_sysinit="${C_OTHER}[${C_DONE}sysinit${C_OTHER}]"
+			else
+				s_sysinit="${C_OTHER}[${C_DONE}       ${C_OTHER}]"
+			fi
+			# print shutdown
+			if ! ck_shutdown "$daemon"; then
+				s_shutdown="${C_OTHER}[${C_DONE}shutdown${C_OTHER}]"
+			else
+				s_shutdown="${C_OTHER}[${C_DONE}        ${C_OTHER}]"
+			fi
+			printf "$s_status$s_auto$s_sysinit$s_shutdown${C_CLEAR} $daemon\n"
 		done
 	;;
-	enable) enable_auto ;;
-	disable) disable_auto ;;
+	enable) check_root; enable_auto ;;
+	disable) check_root; disable_auto ;;
 	*)
+        check_root
 		# other actions need an explicit daemons list
 		[[ -z $daemons ]] && usage
 		filter_daemons
