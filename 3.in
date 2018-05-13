@@ -2,31 +2,18 @@
 
 PATH=/usr/bin:/usr/sbin
 
-. @RCDIR@/rc.conf
-. @RCDIR@/functions
-. @RCDIR@/rc.shutdown
+. @RCLIBDIR@/functions
 
-status "Stop services ..." sv force-stop @RUNDIR@/service/*
-status "Exit services ..." sv exit @RUNDIR@/service/*
+stat_busy "Stop services ..." sv force-stop @RUNDIR@/service/*
+stat_done
+stat_busy "Exit services ..." sv exit @RUNDIR@/service/*
+stat_done
 
 if [ -e @RUNDIR@/reboot ]; then
     chmod 100 @RUNDIR@/reboot
 fi
 
-# avoid staircase effect
-stty onlcr
-
-echo " "
-printhl "Initiating shutdown..."
-echo " "
-
-run_hook shutdown_start
-
-for shutdown in @RCDIR@/shutdown.d/*; do
-	. $shutdown
-done
-
-run_hook shutdown_poweroff
+run_shutdown
 
 if [ -e @RUNDIR@/reboot ]; then
     [[ -x $(type -P kexec) ]] && kexec -e &>/dev/null
