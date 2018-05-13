@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# sourcing our current rc.conf requires this to be a bash script
+. @RCLIBDIR@/functions
+
+case "$1" in
+    start)
+        stat_busy "Remounting root filesystem rw"
+        mount -o remount,rw /
+        add_daemon remount-root
+        stat_done
+        ;;
+    stop)
+        stat_busy "Remounting root filesystem ro"
+        mount -o remount,ro /
+        sync
+        rm_daemon remount-root
+        stat_done
+        ;;
+    *)
+        echo "usage: $0 {start|stop}"
+        exit 1
+        ;;
+esac

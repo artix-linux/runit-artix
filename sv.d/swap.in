@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# sourcing our current rc.conf requires this to be a bash script
+. @RCLIBDIR@/functions
+
+case "$1" in
+    start)
+        stat_busy "Activating swap"
+        swapon -a
+        add_daemon swap
+        stat_done
+        ;;
+    stop)
+        stat_busy "Deactivating swap"
+        swapoff -a
+        rm_daemon swap
+        stat_done
+        ;;
+    *)
+        echo "usage: $0 {start|stop}"
+        exit 1
+        ;;
+esac

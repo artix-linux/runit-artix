@@ -1,0 +1,9 @@
+# @RCDIR@/rc.conf - system configuration
+
+# HARDWARECLOCK='UTC'
+
+# CGROUP_MODE="hybrid"
+
+# CGROUP_CONTROLLERS=""
+
+# HAVE_CONTROLLER1="true"

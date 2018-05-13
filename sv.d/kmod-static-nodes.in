@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# sourcing our current rc.conf requires this to be a bash script
+. @RCLIBDIR@/functions
+
+case "$1" in
+    start)
+        stat_busy "Starting kmod-static-nodes"
+        [[ -d /run/tmpfiles.d ]] || mkdir /run/tmpfiles.d
+        kmod static-nodes --format=tmpfiles --output=/run/tmpfiles.d/kmod.conf
+        add_daemon kmod-static-nodes
+        stat_done
+        ;;
+    *)
+        echo "usage: $0 {start}"
+        exit 1
+        ;;
+esac

@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# sourcing our current rc.conf requires this to be a bash script
+. @RCLIBDIR@/functions
+
+case "$1" in
+    start)
+        stat_busy "Starting mount-all"
+        mount -a -t "no${NETFS//,/,no}" -O no_netdev
+        add_daemon mount-all
+        stat_done
+        ;;
+    *)
+        echo "usage: $0 {start}"
+        exit 1
+        ;;
+esac

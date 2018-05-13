@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# sourcing our current rc.conf requires this to be a bash script
+. @RCLIBDIR@/functions
+
+case "$1" in
+    start)
+        stat_busy "Starting hostname"
+            unset HOSTNAME
+
+        if [[ -s /etc/hostname ]]; then
+            HOSTNAME=$(< /etc/hostname)
+        fi
+
+        if [[ $HOSTNAME ]]; then
+            echo "$HOSTNAME" >| /proc/sys/kernel/hostname
+        fi
+        add_daemon hostname
+        stat_done
+        ;;
+    *)
+        echo "usage: $0 {start}"
+        exit 1
+        ;;
+esac

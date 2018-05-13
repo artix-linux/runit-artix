@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# sourcing our current rc.conf requires this to be a bash script
+. @RCLIBDIR@/functions
+
+mount_fs(){
+    findmnt / --options ro &>/dev/null || mount -o remount,ro /
+}
+
+umount_fs(){
+    umount -r -a -t nosysfs,noproc,nodevtmpfs,notmpfs
+}
+
+case "$1" in
+    start)
+        stat_busy "Mounting filesystems"
+        mount_fs
+        add_daemon root
+        stat_done
+        ;;
+    stop)
+        stat_busy "Unounting filesystems"
+        umount_fs
+        rm_daemon root
+        stat_done
+        ;;
+    *)
+        echo "usage: $0 {start|stop}"
+        exit 1
+        ;;
+esac

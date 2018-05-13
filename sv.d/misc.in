@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# sourcing our current rc.conf requires this to be a bash script
+. @RCLIBDIR@/functions
+
+case "$1" in
+    start)
+        stat_busy "Checking filesystems"
+        if [[ -x $(type -P fsck) ]]; then
+            fsck_all >|"${FSCK_OUT:-/dev/stdout}" 2>|"${FSCK_ERR:-/dev/stdout}"
+            declare -r fsckret=$?
+        else
+            declare -r fsckret=0
+        fi
+        fsck_reboot $fsckret
+        add_daemon misc
+        stat_done
+        ;;
+    stop)
+        stat_busy "Running kill-all"
+        pkill --inverse -s0,1 -TERM
+        sleep 1
+        pkill --inverse -s0,1 -KILL
+        rm_daemon misc
+        stat_done
+        ;;
+    *)
+        echo "usage: $0 {start|stop}"
+        exit 1
+        ;;
+esac

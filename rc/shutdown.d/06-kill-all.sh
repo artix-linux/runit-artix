@@ -1,3 +1,0 @@
-run_hook shutdown_prekillall
-kill_all
-run_hook shutdown_postkillall
