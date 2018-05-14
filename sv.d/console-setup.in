@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# sourcing our current rc.conf requires this to be a bash script
+. @RCLIBDIR@/functions
+
+case "$1" in
+    start)
+        stat_busy "Starting console-setup"
+        [ -r /etc/vconsole.conf ] && . /etc/vconsole.conf
+        TTYS=${TTYS:-6}
+        if [ -n "$FONT" ]; then
+            _index=0
+            while [ ${_index} -le $TTYS ]; do
+                setfont ${FONT_MAP:+-m $FONT_MAP} ${FONT_UNIMAP:+-u $FONT_UNIMAP} \
+                        $FONT -C "/dev/tty${_index}"
+                _index=$((_index + 1))
+            done
+        fi
+        if [ -n "$KEYMAP" ]; then
+            loadkeys -q -u ${KEYMAP}
+        fi
+        add_daemon console-setup
+        stat_done
+        ;;
+    *)
+        echo "usage: $0 {start}"
+        exit 1
+        ;;
+esac

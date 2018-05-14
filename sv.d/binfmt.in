@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# sourcing our current rc.conf requires this to be a bash script
+. @RCLIBDIR@/functions
+
+case "$1" in
+    start)
+        stat_busy "Running binfmt"
+        mountpoint -q /proc/sys/fs/binfmt_misc || \
+        mount -t binfmt_misc binfmt /proc/sys/fs/binfmt_misc
+
+        for path in /usr/lib/binfmt.d /etc/binfmt.d /run/binfmt.d; do
+            [[ ! -d $path ]] && continue
+            [[ -z "$(ls $path)" ]] && continue
+            grep "^:" $path/* | \
+                while read -r line; do
+                    printf "%s" "$line" > /proc/sys/fs/binfmt_misc/register
+                done
+        done
+        add_daemon binfmt
+        stat_done
+        ;;
+    *)
+        echo "usage: $0 {start}"
+        exit 1
+        ;;
+esac

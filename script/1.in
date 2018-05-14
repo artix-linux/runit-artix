@@ -1,0 +1,11 @@
+#!/bin/bash
+
+PATH=/usr/bin:/usr/sbin
+
+. @RCLIBDIR@/functions
+
+run_sysinit
+
+install -m100 /dev/null @RUNDIR@/stopit
+
+status "Initialization complete"

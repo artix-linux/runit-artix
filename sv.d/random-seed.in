@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# sourcing our current rc.conf requires this to be a bash script
+. @RCLIBDIR@/functions
+
+case "$1" in
+    start)
+        stat_busy "Starting random-seed"
+        cp /var/lib/random-seed /dev/urandom >/dev/null 2>&1 || true
+        ( umask 077; bytes=$(cat /proc/sys/kernel/random/poolsize) || bytes=512; dd if=/dev/urandom of=/var/lib/random-seed count=1 bs=$bytes >/dev/null 2>&1 )
+        add_daemon random-seed
+        stat_done
+        ;;
+    stop)
+        stat_busy "Stopping random-seed"
+        ( umask 077; bytes=$(cat /proc/sys/kernel/random/poolsize) || bytes=512; dd if=/dev/urandom of=/var/lib/random-seed count=1 bs=$bytes >/dev/null 2>&1 )
+        rm_daemon random-seed
+        stat_done
+        ;;
+    *)
+        echo "usage: $0 {start|stop}"
+        exit 1
+        ;;
+esac

@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# sourcing our current rc.conf requires this to be a bash script
+. @RCLIBDIR@/functions
+
+case "$1" in
+    start)
+        stat_busy "Starting net-lo"
+        ip link set up dev lo
+        add_daemon net-lo
+        stat_done
+        ;;
+    *)
+        echo "usage: $0 {start}"
+        exit 1
+        ;;
+esac

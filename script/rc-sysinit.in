@@ -1,0 +1,5 @@
+#!/bin/bash
+
+. @RCLIBDIR@/functions
+
+run_sysinit
