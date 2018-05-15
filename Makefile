@@ -87,10 +87,7 @@ EDIT = sed \
 	-e "s|@SERVICEDIR[@]|$(SERVICEDIR)|g" \
 	-e "s|@RUNSVDIR[@]|$(RUNSVDIR)|g" \
 	-e "s|@RUNDIR[@]|$(RUNDIR)|g" \
-	-e "s|@RCLIBDIR[@]|$(RCLIBDIR)|g" \
-	-e "s|@RCDIR[@]|$(RCDIR)|g" \
-	-e "s|@RCSVDIR[@]|$(RCSVDIR)|g" \
-	-e "s|@RCRUNDIR[@]|$(RCRUNDIR)|g"
+	-e "s|@RCLIBDIR[@]|$(RCLIBDIR)|g"
 
 %: %.in Makefile
 	@echo "GEN $@"
