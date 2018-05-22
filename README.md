@@ -1,17 +1,11 @@
-## Runit init scripts for Artix Linux
+## Supplemental files for runit in Artix
 
-This repository contains the runit init scripts for the Artix Linux
-distribution.
+These files are supplements for runit implementation in Artix Linux.
 
 ## Dependencies
 
-- GNU coreutils
-- GNU bash
-- A POSIX awk
-- procps-ng
 - runit
-- opentmpfiles
-- opensysusers
+- runit-rc (https://github.com/artix-linux/runit-rc)
 
 ### How to use it
 
