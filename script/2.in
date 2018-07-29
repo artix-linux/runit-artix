@@ -10,6 +10,7 @@ for arg in $(cat /proc/cmdline); do
     fi
 done
 
+[ -x @RCDIR@/rc.local ] && @RCDIR@/rc.local
 runsvchdir "${runlevel}"
 
 ln -s @RUNSVDIR@/current @SERVICEDIR@

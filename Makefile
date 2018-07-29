@@ -7,6 +7,7 @@ RCLIBDIR = $(LIBDIR)/rc
 
 ########### runit ###########
 
+RCDIR = $(SYSCONFDIR)/rc
 RUNITDIR = $(SYSCONFDIR)/runit
 SVDIR = $(RUNITDIR)/sv
 RUNSVDIR = $(RUNITDIR)/runsvdir
@@ -24,6 +25,8 @@ STAGES = \
 	script/2 \
 	script/3 \
 	script/ctrlaltdel
+
+RCLOCAL = script/rc.local
 
 AGETTY_CONSOLE = $(wildcard sv/agetty-console/*)
 AGETTY_CONSOLE_S = supervise.agetty-console
@@ -83,6 +86,7 @@ CHMODAW = chmod a-w
 CHMODX = chmod +x
 
 EDIT = sed \
+	-e "s|@RCDIR[@]|$(RCDIR)|g" \
 	-e "s|@RUNITDIR[@]|$(RUNITDIR)|g" \
 	-e "s|@SERVICEDIR[@]|$(SERVICEDIR)|g" \
 	-e "s|@RUNSVDIR[@]|$(RUNSVDIR)|g" \
@@ -98,7 +102,7 @@ EDIT = sed \
 
 all: all-runit
 
-all-runit: $(STAGES)
+all-runit: $(STAGES) $(RCLOCAL)
 		$(CC) $(CFLAGS) src/pause.c -o src/pause $(LDFLAGS)
 
 install-runit:
@@ -112,6 +116,9 @@ install-runit:
 
 	$(LN) $(RUNDIR)/reboot $(DESTDIR)$(RUNITDIR)/
 	$(LN) $(RUNDIR)/stopit $(DESTDIR)$(RUNITDIR)/
+
+	install -d $(DESTDIR)$(RCDIR)
+	install -m755 $(RCLOCAL) $(DESTDIR)$(RCDIR)
 
 	install -d $(DESTDIR)$(BINDIR)
 	install -m755 $(BIN) $(DESTDIR)$(BINDIR)
@@ -180,7 +187,7 @@ install-runit:
 install: install-runit
 
 clean-runit:
-	-$(RM) src/pause $(STAGES)
+	-$(RM) src/pause $(STAGES) $(RCLOCAL)
 
 clean: clean-runit
 
