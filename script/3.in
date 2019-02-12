@@ -4,9 +4,11 @@ PATH=/usr/bin:/usr/sbin
 
 . @RCLIBDIR@/functions
 
-stat_busy "Stop services ..." sv force-stop @RUNDIR@/service/*
+stat_busy "Stop services ..."
+sv force-stop @RUNDIR@/service/*
 stat_done
-stat_busy "Exit services ..." sv exit @RUNDIR@/service/*
+stat_busy "Exit services ..."
+sv exit @RUNDIR@/service/*
 stat_done
 
 if [ -e @RUNDIR@/reboot ]; then
