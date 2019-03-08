@@ -26,7 +26,7 @@ STAGES = \
 	script/3 \
 	script/ctrlaltdel
 
-RCLOCAL = script/rc.local
+RCLOCAL = script/rc.local script/rc.shutdown
 
 AGETTY_CONSOLE = $(wildcard sv/agetty-console/*)
 AGETTY_CONSOLE_S = supervise.agetty-console

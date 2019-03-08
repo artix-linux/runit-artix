@@ -11,6 +11,8 @@ stat_busy "Exit services ..."
 sv exit @RUNDIR@/service/*
 stat_done
 
+[ -x @RCDIR@/rc.shutdown ] && @RCDIR@/rc.shutdown
+
 if [ -e @RUNDIR@/reboot ]; then
     chmod 100 @RUNDIR@/reboot
 fi
