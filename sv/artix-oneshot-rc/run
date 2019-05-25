@@ -1,0 +1,4 @@
+#!/bin/sh
+. /usr/lib/rc/functions
+run_oneshot_services
+exec chpst -b artix-oneshot pause

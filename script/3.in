@@ -4,12 +4,10 @@ PATH=/usr/bin:/usr/sbin
 
 . @RCLIBDIR@/functions
 
-stat_busy "Stop services ..."
+msg "Stopping services"
 sv force-stop @RUNDIR@/service/*
-stat_done
-stat_busy "Exit services ..."
+msg "Exiting services"
 sv exit @RUNDIR@/service/*
-stat_done
 
 [ -x @RCDIR@/rc.shutdown ] && @RCDIR@/rc.shutdown
 
@@ -23,4 +21,4 @@ if [ -e @RUNDIR@/reboot ]; then
     [[ -x $(type -P kexec) ]] && kexec -e &>/dev/null
 fi
 
-status "Stage 3 completed."
+msg_ok "Stage 3 completed."

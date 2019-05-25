@@ -1,0 +1,3 @@
+This service is a one-time script to make sure enabled one-shot/rc
+services in Artix can be run automatically on boot. For list of enabled
+rc services, run "service list rc".
