@@ -1,4 +1,4 @@
-# @RCDIR@/rc.local -- rc.local for Artix Linux
+# @SYSCONFDIR@/rc.local -- rc.local for Artix Linux
 #
 # Enter your custom commands here. It will be executed on stage 2
 # before running services.

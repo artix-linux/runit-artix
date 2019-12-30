@@ -10,7 +10,13 @@ for arg in $(cat /proc/cmdline); do
     fi
 done
 
-[ -x @RCDIR@/rc.local ] && @RCDIR@/rc.local
+if [ -x @RCDIR@/rc.local ] && grep -qv '^#' @RCDIR@/rc.local; then
+    @RCDIR@/rc.local
+    echo "@RCDIR@/rc.local has been deprecated. Please move the contents"
+    echo "of the file to @SYSCONFDIR/rc.local, since the next version of"
+    echo "runit-artix won't read @RCDIR@/rc.local anymore."
+fi
+[ -x @SYSCONFDIR@/rc.local ] && @SYSCONFDIR@/rc.local
 runsvchdir "${runlevel}"
 
 ln -s @RUNSVDIR@/current @SERVICEDIR@

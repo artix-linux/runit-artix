@@ -1,4 +1,4 @@
-# @RCDIR@/rc.shutdown -- rc.shutdown for Artix Linux
+# @SYSCONFDIR@/rc.shutdown -- rc.shutdown for Artix Linux
 #
 # Enter your custom commands here. It will be executed on stage 3
 # after stopping services.

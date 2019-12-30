@@ -91,6 +91,7 @@ EDIT = sed \
 	-e "s|@SERVICEDIR[@]|$(SERVICEDIR)|g" \
 	-e "s|@RUNSVDIR[@]|$(RUNSVDIR)|g" \
 	-e "s|@RUNDIR[@]|$(RUNDIR)|g" \
+	-e "s|@SYSCONFDIR[@]|$(SYSCONFDIR)|g" \
 	-e "s|@RCLIBDIR[@]|$(RCLIBDIR)|g"
 
 %: %.in Makefile
@@ -119,6 +120,7 @@ install-runit:
 
 	install -d $(DESTDIR)$(RCDIR)
 	install -m755 $(RCLOCAL) $(DESTDIR)$(RCDIR)
+	install -m755 $(RCLOCAL) $(DESTDIR)$(SYSCONFDIR)
 
 	install -d $(DESTDIR)$(BINDIR)
 	install -m755 $(BIN) $(DESTDIR)$(BINDIR)
