@@ -120,7 +120,6 @@ install-runit:
 
 	install -d $(DESTDIR)$(RCDIR)
 	install -m755 $(RCLOCAL) $(DESTDIR)$(RCDIR)
-	install -m755 $(RCLOCAL) $(DESTDIR)$(SYSCONFDIR)
 
 	install -d $(DESTDIR)$(BINDIR)
 	install -m755 $(BIN) $(DESTDIR)$(BINDIR)
