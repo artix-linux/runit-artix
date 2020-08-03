@@ -6,6 +6,7 @@ PATH=/usr/bin:/usr/sbin
 
 run_sysinit
 
-install -m100 /dev/null @RUNDIR@/stopit
+install -m000 /dev/null @RUNDIR@/stopit
+install -m000 /dev/null @RUNDIR@/reboot
 
 status "Initialization complete"
