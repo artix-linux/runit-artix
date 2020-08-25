@@ -118,8 +118,8 @@ install-runit:
 	$(LN) $(RUNDIR)/reboot $(DESTDIR)$(RUNITDIR)/
 	$(LN) $(RUNDIR)/stopit $(DESTDIR)$(RUNITDIR)/
 
-	install -d $(DESTDIR)$(RCDIR)
-	install -m755 $(RCLOCAL) $(DESTDIR)$(RCDIR)
+	install -d $(DESTDIR)$(SYSCONFDIR)
+	install -m755 $(RCLOCAL) $(DESTDIR)$(SYSCONFDIR)
 
 	install -d $(DESTDIR)$(BINDIR)
 	install -m755 $(BIN) $(DESTDIR)$(BINDIR)
