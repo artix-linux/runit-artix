@@ -17,7 +17,7 @@ if [ -x @RCDIR@/rc.shutdown ] && grep -qv '^#' @RCDIR@/rc.shutdown; then
     echo "    of the file to @SYSCONFDIR@/rc.shutdown since the next version of"
     echo "    runit-artix won't read @RCDIR@/rc.shutdown anymore."
 fi
-[ -x @SYSCONFDIR@/rc.local ] && @SYSCONFDIR@/rc.local
+[ -x @SYSCONFDIR@/rc.shutdown ] && @SYSCONFDIR@/rc.shutdown
 
 run_shutdown
 
