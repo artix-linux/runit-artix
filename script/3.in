@@ -11,12 +11,11 @@ stat_busy "Exit services ..."
 sv exit @RUNDIR@/service/*
 stat_done
 
-if [ -x @RCDIR@/rc.shutdown ] && grep -qv '^#' @RCDIR@/rc.shutdown; then
-    @RCDIR@/rc.shutdown
-    echo "==> @RCDIR@/rc.shutdown has been depreacted. Please move the contents"
-    echo "    of the file to @SYSCONFDIR@/rc.shutdown since the next version of"
-    echo "    runit-artix won't read @RCDIR@/rc.shutdown anymore."
-fi
+# OpenRC compatibility
+for script in /etc/local.d/*.stop; do
+    [ -x "$script" ] && "$script"
+done
+
 [ -x @SYSCONFDIR@/rc.shutdown ] && @SYSCONFDIR@/rc.shutdown
 
 run_shutdown
