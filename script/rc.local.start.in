@@ -10,4 +10,6 @@ EOF
     chmod +x @SYSCONFDIR@/rc.local
 fi
 
-. @SYSCONFDIR@/rc.local
+# Execute rc.local only once.
+# If artix-branding-base exists, that one will execute rc.local instead.
+[ ! -x @SYSCONFDIR@/local.d/local.start ] && . @SYSCONFDIR@/rc.local
