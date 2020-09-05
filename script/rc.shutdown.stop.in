@@ -1,10 +1,13 @@
 #!/bin/sh
 
-[ ! -x @SYSCONFDIR@/rc.shutdown ] && cat > @SYSCONFDIR@/rc.shutdown << EOF
+if [ ! -x @SYSCONFDIR@/rc.shutdown ]; then
+    cat > @SYSCONFDIR@/rc.shutdown << EOF
 # @SYSCONFDIR@/rc.shutdown -- rc.shutdown for Artix Linux
 #
 # Enter your custom commands here. It will be executed on stage 3
 # after stopping services.
 EOF
+    chmod +x @SYSCONFDIR@/rc.shutdown
+fi
 
 . @SYSCONFDIR@/rc.shutdown
