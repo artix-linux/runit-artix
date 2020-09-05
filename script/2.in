@@ -10,10 +10,8 @@ for arg in $(cat /proc/cmdline); do
     fi
 done
 
-[ -x @SYSCONFDIR@/rc.local ] && @SYSCONFDIR@/rc.local
-
-# OpenRC compatibility
-for script in /etc/local.d/*.start; do
+# Hacky hacky OpenRC compatibility
+for script in @SYSCONFDIR@/local.d/*.start; do
     [ -x "$script" ] && "$script"
 done
 

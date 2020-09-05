@@ -26,7 +26,7 @@ STAGES = \
 	script/3 \
 	script/ctrlaltdel
 
-RCLOCAL = script/rc.local script/rc.shutdown
+RCLOCAL = script/rc.local.start script/rc.shutdown.stop
 
 AGETTY_CONSOLE = $(wildcard sv/agetty-console/*)
 AGETTY_CONSOLE_S = supervise.agetty-console
@@ -118,8 +118,8 @@ install-runit:
 	$(LN) $(RUNDIR)/reboot $(DESTDIR)$(RUNITDIR)/
 	$(LN) $(RUNDIR)/stopit $(DESTDIR)$(RUNITDIR)/
 
-	install -d $(DESTDIR)$(SYSCONFDIR)
-	install -m755 $(RCLOCAL) $(DESTDIR)$(SYSCONFDIR)
+	install -d $(DESTDIR)$(SYSCONFDIR)/local.d
+	install -m755 $(RCLOCAL) $(DESTDIR)$(SYSCONFDIR)/local.d
 
 	install -d $(DESTDIR)$(BINDIR)
 	install -m755 $(BIN) $(DESTDIR)$(BINDIR)

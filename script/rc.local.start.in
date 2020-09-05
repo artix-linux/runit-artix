@@ -1,4 +1,10 @@
+#!/bin/sh
+
+[ ! -x @SYSCONFDIR@/rc.local ] && cat > @SYSCONFDIR@/rc.local << EOF
 # @SYSCONFDIR@/rc.local -- rc.local for Artix Linux
 #
 # Enter your custom commands here. It will be executed on stage 2
 # before running services.
+EOF
+
+. @SYSCONFDIR@/rc.local
