@@ -28,6 +28,8 @@ STAGES = \
 
 RCLOCAL = script/rc.local.start script/rc.shutdown.stop
 
+UDEV = $(wildcard sv/udevd/*)
+
 AGETTY_CONSOLE = $(wildcard sv/agetty-console/*)
 AGETTY_CONSOLE_S = supervise.agetty-console
 
@@ -126,6 +128,9 @@ install-runit:
 
 	install -d $(DESTDIR)$(TMPFILESDIR)
 	install -m755 $(TMPFILES) $(DESTDIR)$(TMPFILESDIR)/runit.conf
+
+	install -d $(DESTDIR)$(SVDIR)/udevd
+	install -Dm755 $(UDEV) $(DESTDIR)$(SVDIR)/udevd
 
 	install -d $(DESTDIR)$(SVDIR)/agetty-console
 	install -Dm755 $(AGETTY_CONSOLE) $(DESTDIR)$(SVDIR)/agetty-console
