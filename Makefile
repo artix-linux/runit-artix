@@ -182,6 +182,7 @@ install-runit:
 	install -Dm755 $(AGETTY_SULOGIN) $(DESTDIR)$(SVDIR)/sulogin
 	$(LN) $(RUNDIR)/$(AGETTY_SULOGIN_S) $(DESTDIR)$(SVDIR)/sulogin/supervise
 
+	$(LN) $(SVDIR)/udevd $(DESTDIR)$(RUNSVDIR)/default/udevd
 	for g in $(AGETTY_SYMS); do $(LN) $(SVDIR)/$$g $(DESTDIR)$(RUNSVDIR)/default/$$g; done
 	for g in $(SULOGIN_SYM); do $(LN) $(SVDIR)/$$g $(DESTDIR)$(RUNSVDIR)/single/$$g; done
 
