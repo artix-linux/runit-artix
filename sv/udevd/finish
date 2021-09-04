@@ -1,0 +1,2 @@
+#!/bin/sh
+[ -S /run/udev/control ] && rm -f /run/udev/control
